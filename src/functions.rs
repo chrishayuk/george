@@ -132,7 +132,7 @@ fn standardise(mut r: i64, mut e: i32) -> Result<u32, u32> {
     r >>= 1;
     let high = (r >> 32) as u32;
     if !(crate::number::EXP_MIN..=crate::number::EXP_MAX).contains(&e) {
-        return Err(high << 10 | ((e << 21) as u32) >> 22);
+        return Err(crate::number::halved(high as i32, e).to_word());
     }
     Ok(high << 10 | (e as u32 & 0x3ff))
 }
@@ -591,6 +591,76 @@ pub fn rem(a: u32, b: u32) -> Outcome {
         r = (i64::from(h as i32) << 32) | (r & 0xffff_ffff);
     }
     rem_result(r, b)
+}
+
+/// Whether `b` is a whole number of modulus 2^15 or more, for which
+/// Hamblin's fetch integer does not give b (it takes the exponent mod 16:
+/// 32768 is fetched as 1). The interpreter does `a b rem` for these by the
+/// manual's definition (`rem_by_definition`).
+pub fn whole_beyond_fetch(b: u32) -> bool {
+    let (m, e) = unpack(b);
+    if m == 0 || e < 16 {
+        return false;
+    }
+    // |b| >= 2^15 needs e >= 16; whole if no digit is below the units
+    e >= 21 || m.trailing_zeros() as i32 >= 21 - e
+}
+
+/// `a b rem` by the manual's definition (section 1.6): "a b rem gives x
+/// where nb + x = a, n and b being integers and 0 <= x < b", for a whole
+/// divisor b of 2^15 or more (`whole_beyond_fetch`). x is formed exactly
+/// and then rounded to 22 digits by standardise, as Hamblin's rem rounds
+/// its result; if that gives b itself, the result is 0, as his rem does
+/// (`8_1 21-28`). A negative divisor stops (1 30-16x) and resumes giving
+/// zero, as the manual's stop table says.
+pub fn rem_by_definition(a: u32, b: u32) -> Outcome {
+    let (ma, ea) = unpack(a);
+    let (mb, eb) = unpack(b);
+    if mb < 0 {
+        return Outcome::Stop {
+            kind: Fault::RemDivisor,
+            resumed: 0,
+        };
+    }
+    if ma == 0 {
+        return Outcome::Word(0);
+    }
+    // a = ma·2^la, b = mb·2^lb; work in units of 2^l, l the finer of the two
+    let (la, lb) = (ea - 21, eb - 21);
+    let l = la.min(lb);
+    let x: i128 = if lb - l > 64 {
+        // b is more than 2^64 times a's last digit, so |a| < b / 2^40
+        if ma > 0 {
+            return Outcome::Word(a);
+        }
+        // b - |a| rounds to b: x is 0
+        return Outcome::Word(0);
+    } else {
+        let big_b = i128::from(mb) << (lb - l);
+        // ma·2^(la - l) mod big_b, the power taken mod big_b step by step
+        let mut p: i128 = i128::from(ma).rem_euclid(big_b);
+        for _ in 0..(la - l) {
+            p = (p * 2).rem_euclid(big_b);
+        }
+        p
+    };
+    if x == 0 {
+        return Outcome::Word(0);
+    }
+    // x·2^l as a register for standardise: r = x·2^t, e = l + 53 - t, with
+    // the high word in units of the last digit; digits shifted out at the
+    // bottom cannot change a rounding halves up
+    let bits = 128 - x.leading_zeros() as i32;
+    let t = 53 - bits;
+    let r = if t >= 0 { x << t } else { x >> -t } as i64;
+    match standardise(r, l + 53 - t) {
+        Ok(w) if w == b => Outcome::Word(0),
+        Ok(w) => Outcome::Word(w),
+        Err(w) => Outcome::Stop {
+            kind: Fault::Overflow,
+            resumed: w,
+        },
+    }
 }
 
 /// rem's end: `7_20 8-13` (exponent 21), standardise with the link

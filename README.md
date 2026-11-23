@@ -155,10 +155,23 @@ the way the machine did.
 The two describe different versions: the manual the system as released, the
 sheets the version before the last. Where the manual says something
 specific, `george run` follows it; where it is silent, `george run` does
-what Hamblin's code does, word for word; `george deuce george` is the sheets
-exactly, slips and all. Only two cases fall under the first rule, `max` and
-the single shot after `√` of a negative number. See "Which source wins" in
-[DECISIONS.md](DECISIONS.md).
+what Hamblin's code does, word for word; `george deuce george` runs the
+sheets as transcribed, with the four corrections and one reconstruction
+listed in [ERRATA.md](ERRATA.md) applied at run time (`GEORGE_AS_WRITTEN=1`
+turns them off). See "Which source wins" in [DECISIONS.md](DECISIONS.md)
+for the cases that fall under the first rule.
+
+"Word for word" means agreement with the simulated sheets. The simulator is
+built from English Electric's Programming Manual and Logical Design Manual,
+and much of what the arithmetic depends on is documented there (the
+multiplier step by step, DS21's carries, the shifts, including the odd-first
+shift that loses one digit and doubles another, Logical Design Manual
+p. 58). Some is chosen or inferred: the divider gives its result from its
+definition, not step by step; the reader's and punch's timings are taken
+from the middle of the manuals' ranges; and one class of P31 digits rests
+on the program running. So the agreement shows the interpreter is faithful
+to Hamblin's code as reconstructed here, under those assumptions, not
+that it matches a DEUCE that no longer exists.
 
 ```
 $ george deuce george examples/factorials.george
@@ -185,23 +198,24 @@ that the manual does not describe.
 
 Beyond the examples, `scripts/fuzz_routes.py` writes random G-programs
 (arithmetic, functions, suffixes, repetitions, conditional skips, logic and
-subroutines) and runs each both ways. Of 2,000 (seed 1958), all 2,000
-punch the same. The last to differ read the numeral 939.9729 one unit
-higher in the last binary place on Hamblin's code, which cos magnified to
-the fourth figure; the translator's numeral conversion and read translate
-have since been traced and the interpreter now converts numerals and data
-cards word for word as they do (findings 28-29). (With the numerals
-converted to the nearest word, the same 2,000 gave 1,999 the same and 1
-different; with + and - rounded to nearest, the same 2,000 gave 1,833 the same, 140
-differing in the sixth figure and 27 more; with × ÷ and the punch rounded
-to nearest, 1,946, 31 and 23; with the functions in double precision,
-1,952, 27 and 21.)
-Running these and the tutorial's 100 programs both ways found five behaviours the manual does not describe, which the
-interpreter now copies from Hamblin's code: `0 ÷ 0` is 0, copying from an
+subroutines), runs each both ways, and compares everything punched, every
+wait and resumed stop, and the stop each run ends on, by its indication. Of
+5,000 (seed 2027), 4,993 are the same in every respect, and the other 7 are
+all `0 ÷ 0`, where the interpreter stops as the manual says and Hamblin's
+code does not; with `max` in the mix, `max` accounts for the rest.
+(Before the arithmetic, the punch, the functions and the numerals were
+traced and done word for word, the comparison was looser and the numbers
+worse: with + and - rounded to nearest, 1,833 of 2,000 the same and 140
+differing in the sixth figure.)
+Running these and the tutorial's 100 programs both ways found four behaviours the manual does not describe, which the
+interpreter now copies from Hamblin's code: copying from an
 empty accumulator gives 0, indexing numbers go through the same
 "fetch integer" as `rem` (nearest, halves up, within the manual's range),
 sin and cos are 0 beyond ±2^21, and the all-ones word punches as 0 (since traced to
-the punch routine, finding 25).
+the punch routine, finding 25). A fifth, `0 ÷ 0` giving 0 with no stop, was
+copied too until it was seen that the manual's stop table does describe it
+("divisor zero (÷)"): the interpreter now stops there, as the manual says
+([DECISIONS.md](DECISIONS.md), "Which source wins").
 
 The three documents, all on David Green's DEUCE archive
 ([sources/README.md](sources/README.md)):

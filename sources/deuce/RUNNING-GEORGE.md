@@ -119,6 +119,50 @@ It does what an operator did (manual §2.1):
    - `GEORGE_P31=none`, `all`, or a list of tracks overrides the rule, for
      experiments.
 
+5. **Sheet 3 block 1 (DL5, 12/5) m.c. 29 is written `4 4 24 - 0 1`.** I
+   checked it on a 300 dpi render: it is clearly "0 1". It clears TCB and
+   goes on to 4_0, which is the *multiply* routine's `19_2-13`. The divide
+   flow diagram (p.20) goes from `5_29 4-24` to `4_31 23-21_3`, which is on
+   sheet 2 at 12/4 m.c. 31 as `5 23 21 - 0 3`. That needs T = 0. As written,
+   `3, 4 ÷` punches zeros without end; with T = 0 it punches 0.75. This is
+   applied as a run-time correction (`george::CORRECTIONS`); the
+   transcription is unchanged. `GEORGE_AS_WRITTEN=1` turns the corrections
+   off. It is probably a slip that was corrected in the final version.
+
+6. **Heads above 15.** "Store track" writes keywords with a head number
+   built as 15 + a count. That reaches 16, and the simulator takes head 16
+   as head 0. This looks deliberate: it walks round the 16 tracks of
+   position 10. **Inferred**: the hardware decodes only four digits of the
+   head number.
+
+7. **The read-in's store template needs P31 = 0.** This is the word on
+   13/12 m.c. 9, `1, 14-9, 1 (15) 31` (p.5, "[14-9_0, J=15]"). After 32
+   symbols, W spills through J into T = 31, and the carry reaches P31. With
+   P31 = 1 the go digit flips, and any program of 33-36 symbols loses its
+   ninth row: the end code is missed and the read waits for more cards. It
+   is added to `P31_CLEAR`.
+
+8. **Sheet 12 block 3 (DL8, 14/2) m.c. 18 is written `1 21 8 2 0 1`.** I
+   checked it at 300 dpi: it is clearly "0 1". This is the last instruction
+   of "R| and P| modify", and as written it goes to 1_21 (NKD), so `R|` and
+   `P|` do nothing. Flow diagram p.42 ends modify with `8_18 21-8_20,21 (2)`
+   → **1_31**, where assemble planted the link (`7_15 16-1_31`, "link Q31
+   in 16"). That needs T = 11. The same routine for `R||` (14/9 m.c. 31,
+   `1 21 8 2 19 30`) does go to 1_31, which supports the reading. Applied as
+   a run-time correction.
+
+9. **Sheet 17 block 2 (15/0) m.c. 28, Hamblin's addition to S06/M12, is
+   written `1 27 22 - 1 27`.** It adds P1 into 21_3 and goes on to 1_25.
+   Punch translate (p.47) has `6_28 27-22_3` *then* `6_10 21_3-14` (the
+   other addition) before the sign test at 1_16. As written, 6_10 is never
+   reached and TS14 still holds P10. Every number with a binary exponent of
+   −2 or less (0.2, 0.05, exp(−3) ...) then punches zeros without end.
+   Going on to 6_10 needs NIS 6, T 12. Applied as a run-time correction.
+
+   (Findings 5-9 were restored on 23 November 2026, after the second
+   independent review found ERRATA.md citing them while an earlier edit of
+   this file had dropped them. The text is as first written.)
+
 10. **Sheet 21 block 3 (DL8, 15/13) m.c. 21 is struck and overwritten**
     (layers `0 29 27 2 26 26` and `0 21 23 - 30 6`). It cannot be read
     securely, and the transcription keeps it as struck and doubtful. 8_18
@@ -304,11 +348,29 @@ operations at six figures (170 random cases).
     which are all 0. The card is `-000000000-000000001`, read as 0. The
     interpreter now punches the same card.
 - **`(P)` with an empty accumulator** punches 0 and then stops at the next
-  symbol. The interpreter stops at `(P)`.
+  symbol that takes a number away. The interpreter now does the same
+  (copying from an empty accumulator gives 0; DECISIONS.md).
 - **`rem` with a fractional divisor** (7, 2.5 rem → 1) agrees with the
   interpreter. Traced (finding 23): "fetch integer" (12/6) takes the
   divisor, rounding halves up, but with the exponent mod 16, so `7, .4 rem`
   divides by 26. The interpreter now does rem word for word.
+
+- **`0 ÷ 0` gives 0, with no stop.** Divide sends a zero dividend to
+  standardise before it looks at the divisor (p.20). The manual's stop
+  table says "divisor zero (÷)" without exception, and the interpreter
+  stops (1 4-24x; a single shot gives 0), as DECISIONS.md "Which source
+  wins" says.
+- **`rem` by a whole divisor of 2^15 or more** is taken mod 16 in the
+  exponent by fetch integer: `7, 32768 rem` divides by 1 and gives 0. The
+  interpreter follows the manual's definition (7).
+- **`>` with a word whose mantissa is zero and exponent is not**, as `&`
+  can make: `.000000001, 2, 3 neg & >` is falsehood here (the subtract
+  routine takes the zero with the larger exponent at face value) and truth
+  in the interpreter, which compares values as the manual says.
+- **The repetition step for a variable below 1/2** goes astray (finding
+  30): `1, 2 rep (i) i (P) ; .3 (i) ; ]` punches 1 and comes to rest on
+  1 19-25x, in no table. The interpreter stops on the `]` with a stop of
+  its own (indication "none").
 
 - **`√` of a negative number, resumed with a single shot, gives 0.5**, not
   the zero the manual's stop table promises. p.37 branches on the sign to
@@ -1059,6 +1121,78 @@ are six below the sheets' (finding 16); the m.c. below are the sheets'.
 
     The interpreter now converts numerals with `numeral_word` and data
     cards with `read_word` (before: decimal text → f64 → the nearest word).
+
+### The repetition step and the single shot after overflow (finding 30)
+
+Both found by the second independent review; traced with
+`trace_registers` (`SRC="1, 2 rep (i) 1.3 (i) ; ]"`), m.c. as the trace
+shows them.
+
+30. **The repetition step** (`]` recalling `rep`, flow diagram p.27,
+    tracks 12/12-12/13). After the count test and `7_21 27-26` (count − 1)
+    the link entry is written back, and then:
+    ```
+    TS13 := template + v·P17 (8_6, 8_9 25-25)  # v from the link entry
+    Q 12-16_v                     # x fetched from the store again
+    8_28 16-21, 8_31 30-21        # DS21 := x : 0
+    8_2 22-21 (20 m.c.)           # DS21 down 10: m (sign-extended) : e·2^22
+    8_23 21-14, 8_27 23-14 (5)    # TS14 := e·2^22, then e·2^17
+    8_1 23-13                     # TS13 := e·2^16 = e·P17
+    8_4 8-25                      # TS13 += the template at 8_4 (e8005d8e)
+    8_17 27-14                    # TS14 := P1
+    3_22 13-0 → Q 24-14           # TS14 doubled once per m.c.
+    7_14 14-22                    # added to the high word
+    8_21, 8_25, 8_29 30-21        # TS13 := e·2^21, low word cleared
+    8_0 → standardise (3_21 ...)  # with exponent e; stored by Q 16-12_v
+    ```
+    The template is `24-14` with W = 0, T = 20, which runs m.c. 26-14:
+    21 m.c., so P1 becomes 2^21, one unit of x when e = 0. e·P17 adds e to
+    W, and the transfer lasts ((20 − e) mod 32) + 1 m.c.: 2^(21−e), one
+    unit in x's own scale, for 0 <= e <= 20. So the step is
+    `standardise((m + 2^(21−e))·2^32, e)`, x + 1 rounded half up, and the
+    variable is fetched from the store, so a value the body gave it is
+    what is stepped. For e mod 32 = 21 the transfer lasts 32 m.c. and P1
+    is shifted out (nothing is added); for 22-30 it lands above P23 of the
+    high word, which standardise never reads (nothing is added); for 31 it
+    is 2^22, which changes the sign (2^31 + 1 steps to about −2^32). Above
+    e = 31 the carry goes into T, which moves the whole transfer round the
+    delay line without changing its length, so the step repeats every 32
+    octaves; at e = 511 the result can leave the range (3 14-21x, resumed
+    as standardise resumes).
+
+    **For e < 0 (0 < |x| < 1/2) e·P17 is negative and borrows from T**: for
+    0.3 (e = −1) TS13 is e7ff5d8e, `Q 7, 24-14, 1, 31(15), 19`, and the
+    next instruction is taken from 7_13 instead of 7_14. Control is then
+    in the wrong part of the repetition code: it rewrites the link list,
+    stores into the wrong variable (DL12 m.c. 25 instead of i's 8) and
+    comes to rest wherever the path leads. `1, 2 rep (i) i (P) ; .3 (i) ;
+    ]` punches 1 and stops on **1 19-25x**, which is not in the stop table;
+    .4 and .1 stop on 5 25-12x, .25 on 0 0-0x, .01 on 0 14-29x, −0.1 runs
+    on until the limit. Nothing in the manual describes it: the manual
+    says only that x goes "in unit steps". The repetition variable reaches
+    such a value only if the body sets it, or a is fractional and small
+    (`0.3, 2 rep`).
+
+    **Checked word for word** (`rep_increment_word_for_word` in
+    `tests/function_words.rs`): every exponent 0-511 with random and
+    extreme mantissas (2,044 words in a full sweep, 528 in the normal
+    `cargo test`), the stored word or the stop and its resumed word, and
+    every negative exponent tried goes astray. The interpreter now steps
+    with `machine::rep_increment`, and stops (indication "none") where
+    Hamblin's code goes astray. (Before: x + 1 in f64, which gave 1.3 for
+    the program above.)
+
+    **The single shot after 3 14-21x** (standardise, 12/3; DECISIONS.md
+    decision 3). `3_8 26-27` stops; a single shot obeys `3_11 14-21`,
+    which puts e·2^21 in the low word where `3_10 15-21` would have put
+    e·2^22, and the pack brings its top ten digits into P1-10: the exponent
+    field is e halved, rounded down (as a ten-digit field), with the
+    standardised mantissa. `R R ×` with 1e-154 read twice gives
+    6.70391e-155 (e = −1023 → −512). The interpreter halved the value in
+    f64 until the second review and gave 1.34078e-154; it now resumes
+    with this word (`number::halved`). Checked on random + − × ÷ near both
+    ends of the range, the stop's indication and the resumed word
+    (`arithmetic_resumes_word_for_word`).
 
 ### Still open
 

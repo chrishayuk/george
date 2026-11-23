@@ -141,7 +141,7 @@ impl Rig {
     /// Set a, b, ... (DL12 m.c. 26 on) to `w` and go on from the wait; the
     /// words of the next three variables after them, and the stops resumed
     /// by a single shot.
-    fn run(&self, w: &[u32]) -> (Vec<u32>, usize, george::deuce::Outcome) {
+    fn run(&self, w: &[u32]) -> (Vec<u32>, Vec<String>, george::deuce::Outcome) {
         let mut m = self.m.clone();
         for (i, &x) in w.iter().enumerate() {
             m.dl[12][26 + i] = x;
@@ -156,12 +156,33 @@ impl Rig {
             ..Default::default()
         };
         let (o, seen) = g::operate(&mut m, &op, 3_000_000);
-        (m.dl[12][26 + w.len()..].to_vec(), seen.len(), o)
+        let stops = seen
+            .iter()
+            .filter_map(|c| match c {
+                g::Console::Resumed { indication, .. } => Some(indication.clone()),
+                _ => None,
+            })
+            .collect();
+        (m.dl[12][26 + w.len()..].to_vec(), stops, o)
+    }
+}
+
+/// The model's outcome against GEORGE's: the same word with no stop, or
+/// exactly one stop, the one the model names (its indication in the stop
+/// table), and the same word stored after the single shot.
+fn agrees(want: george::functions::Outcome, got: u32, seen: &[String]) -> bool {
+    use george::functions::Outcome as F;
+    match want {
+        F::Word(x) => seen.is_empty() && got == x,
+        F::Stop { kind, resumed } => {
+            seen.len() == 1
+                && george::machine::indication_is(&george::machine::fault_stop(kind), &seen[0])
+                && got == resumed
+        }
     }
 }
 
 fn check_unary(name: &str, src: &str, emin: i32, emax: i32, model: impl Fn(u32) -> george::functions::Outcome) {
-    use george::functions::Outcome as F;
     let rig = Rig::new(src);
     let cases: usize = std::env::var("CASES").ok().and_then(|s| s.parse().ok()).unwrap_or(300);
     let seed: u64 = std::env::var("SEED")
@@ -172,15 +193,12 @@ fn check_unary(name: &str, src: &str, emin: i32, emax: i32, model: impl Fn(u32) 
     let (mut agree, mut differ, mut stops) = (0, 0, 0);
     for _ in 0..cases {
         let w = random_word(&mut r, emin, emax);
-        let (out, resumed, o) = rig.run(&[w]);
+        let (out, seen, o) = rig.run(&[w]);
         assert_eq!(o, george::deuce::Outcome::ReaderEmpty, "{w:08x}");
         let got = out[0];
-        let stopped = resumed > 0;
+        let stopped = !seen.is_empty();
         let want = model(w);
-        let ok = match want {
-            F::Word(x) => !stopped && got == x,
-            F::Stop { resumed, .. } => stopped && got == resumed,
-        };
+        let ok = agrees(want, got, &seen);
         if stopped {
             stops += 1;
         }
@@ -193,7 +211,7 @@ fn check_unary(name: &str, src: &str, emin: i32, emax: i32, model: impl Fn(u32) 
                     "{name} {w:08x} ({:?}): GEORGE {} model {want:x?}",
                     george::Num::from_word(w),
                     if stopped {
-                        "stop".to_string()
+                        format!("stop {seen:?} {got:08x}")
                     } else {
                         format!("{got:08x} {:?}", george::Num::from_word(got))
                     },
@@ -269,7 +287,6 @@ fn check_binary(
     operands: impl Fn(&mut Rng) -> (u32, u32),
     model: impl Fn(u32, u32) -> george::functions::Outcome,
 ) {
-    use george::functions::Outcome as F;
     let rig = Rig::new(src);
     let cases: usize = std::env::var("CASES").ok().and_then(|s| s.parse().ok()).unwrap_or(300);
     let seed: u64 = std::env::var("SEED")
@@ -280,15 +297,12 @@ fn check_binary(
     let (mut agree, mut differ, mut stops) = (0, 0, 0);
     for i in 0..cases + fixed.len() {
         let (a, b) = if i < fixed.len() { fixed[i] } else { operands(&mut r) };
-        let (out, resumed, o) = rig.run(&[a, b]);
+        let (out, seen, o) = rig.run(&[a, b]);
         assert_eq!(o, george::deuce::Outcome::ReaderEmpty, "{a:08x} {b:08x}");
         let got = out[0];
-        let stopped = resumed > 0;
+        let stopped = !seen.is_empty();
         let want = model(a, b);
-        let ok = match want {
-            F::Word(x) => !stopped && got == x,
-            F::Stop { resumed, .. } => stopped && got == resumed,
-        };
+        let ok = agrees(want, got, &seen);
         stops += stopped as usize;
         if ok {
             agree += 1;
@@ -300,7 +314,7 @@ fn check_binary(
                     george::Num::from_word(a),
                     george::Num::from_word(b),
                     if stopped {
-                        format!("stop {got:08x}")
+                        format!("stop {seen:?} {got:08x}")
                     } else {
                         format!("{got:08x} {:?}", george::Num::from_word(got))
                     },
@@ -436,4 +450,147 @@ fn neg_word_for_word() {
 #[test]
 fn mod_word_for_word() {
     check_unary("mod", "a mod (b) ;", -512, 511, george::functions::modulus);
+}
+
+/// The repetition increment (`]` recalling `rep`, tracks 12/12-12/13, flow
+/// diagrams p.27) against `machine::rep_increment`: `0, 1 rep (k) k (b) ;
+/// a (k) ; ]` stores the increment of a in b on the second pass. Every
+/// exponent 0-511 with random mantissas, and negative exponents, where
+/// Hamblin's code goes astray (it must not come to the end of the program).
+/// A (comma separated hex) gives the words instead, and prints them.
+#[test]
+fn rep_increment_word_for_word() {
+    let rig = Rig::new("0, 1 rep (k) k (b) ; a (k) ; ]");
+    let seed: u64 = std::env::var("SEED")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0x9e3779b97f4a7c15);
+    let mut r = Rng(seed);
+    let words: Vec<u32> = match std::env::var("A") {
+        Ok(s) => s.split(',').map(|x| u32::from_str_radix(x, 16).unwrap()).collect(),
+        Err(_) => {
+            let mut v = vec![0, 0x8000_0000, 0x7fff_fc00, 0x8000_0001];
+            for e in -12..512 {
+                let m = match r.below(4) {
+                    0 => 0x1f_ffff,
+                    1 => -0x20_0000,
+                    _ => (0x10_0000 + r.below(0x10_0000) as i32) * if r.below(2) == 0 { 1 } else { -1 },
+                };
+                v.push(
+                    george::Num {
+                        mantissa: m,
+                        exponent: e,
+                    }
+                    .to_word(),
+                );
+            }
+            v
+        }
+    };
+    let (mut agree, mut differ, mut astray) = (0, 0, 0);
+    for a in words {
+        let (out, seen, o) = rig.run(&[a]);
+        let resumed = seen.len();
+        let model = george::machine::rep_increment(a);
+        let ok = match model {
+            Ok(x) => o == george::deuce::Outcome::ReaderEmpty && resumed == 0 && out[0] == x,
+            Err(Some(x)) => {
+                o == george::deuce::Outcome::ReaderEmpty
+                    && resumed == 1
+                    && george::machine::indication_is(&george::machine::OVERFLOW, &seen[0])
+                    && out[0] == x
+            }
+            Err(None) => {
+                astray += 1;
+                o != george::deuce::Outcome::ReaderEmpty
+            }
+        };
+        if std::env::var("A").is_ok() || !ok {
+            println!(
+                "{a:08x} {:?} -> {o:?} {:08x} {:?} model {model:x?}",
+                george::Num::from_word(a),
+                out[0],
+                george::Num::from_word(out[0]),
+            );
+        }
+        if ok {
+            agree += 1;
+        } else {
+            differ += 1;
+        }
+    }
+    println!("rep increment: agree {agree} differ {differ} (astray {astray})");
+    assert_eq!(differ, 0);
+}
+
+/// Addition, subtraction, multiplication and division near the ends of the
+/// exponent range, with the single shot:
+/// where standardise stops on 3 14-21x (overflow or underflow), the word
+/// it stores on the single shot ("resumes with exponent halved") must be
+/// `Overflow`'s word, as the interpreter resumes with it.
+#[test]
+fn arithmetic_resumes_word_for_word() {
+    use george::functions::{Fault, Outcome as F};
+    use george::number::Overflow;
+    fn outcome(r: Result<george::Num, Overflow>) -> F {
+        match r {
+            Ok(n) => F::Word(n.to_word()),
+            Err(Overflow(n)) => F::Stop {
+                kind: Fault::Overflow,
+                resumed: n.to_word(),
+            },
+        }
+    }
+    fn edge(r: &mut Rng) -> u32 {
+        let e = match r.below(4) {
+            0 => 511 - r.below(12) as i32,
+            1 => -512 + r.below(12) as i32,
+            2 => 255 + r.below(4) as i32 - (r.below(2) as i32) * 512,
+            _ => r.below(1024) as i32 - 512,
+        };
+        let w = random_word(r, e, e);
+        // no zero mantissa: a zero divisor stops on 1 4-24x instead
+        if w >> 10 == 0 {
+            1 << 30
+        } else {
+            w
+        }
+    }
+    let n = |w: u32| george::Num::from_word(w);
+    let w = |mantissa: i32, exponent: i32| george::Num { mantissa, exponent }.to_word();
+    let fixed: Vec<(u32, u32)> = vec![
+        (w(0x10_0000, -511), w(0x10_0000, -511)),
+        (w(0x1f_ffff, 511), w(0x1f_ffff, 511)),
+        (w(-0x20_0000, 511), w(-0x20_0000, 511)),
+        (w(0x10_0000, -512), w(0x10_0000, 1)),
+        (w(0x1f_ffff, -300), w(0x1f_ffff, -300)),
+    ];
+    check_binary(
+        "+",
+        "a b + (c) ;",
+        &fixed,
+        |r| (edge(r), edge(r)),
+        |a, b| outcome(n(a).plus(n(b))),
+    );
+    check_binary(
+        "-",
+        "a b - (c) ;",
+        &fixed,
+        |r| (edge(r), edge(r)),
+        |a, b| outcome(n(a).minus(n(b))),
+    );
+    check_binary(
+        "×",
+        "a b × (c) ;",
+        &fixed,
+        |r| (edge(r), edge(r)),
+        |a, b| outcome(n(a).times(n(b))),
+    );
+    check_binary(
+        "÷",
+        "a b ÷ (c) ;",
+        &fixed,
+        |r| (edge(r), edge(r)),
+        |a, b| outcome(n(a).over(n(b))),
+    );
 }

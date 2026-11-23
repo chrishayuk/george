@@ -15,17 +15,53 @@ Hamblin correcting by hand (ERRATA.md). So:
 
 - **Where the manual says something specific, the interpreter follows the
   manual**, even when the sheets disagree, because the manual is the better
-  evidence of what GEORGE did. Two cases: `max` (the sheets give the wrong
-  sign when the second number is larger; the flow diagram carries an
-  amendment) and the single shot after `√` of a negative number (the stop
-  table says it "resumes giving result zero"; the sheets give 0.5, while the
-  other routines the table says the same of, ÷ rem log exp and pow, all
-  give 0 on the sheets too, which makes √ look like a slip of this version).
+  evidence of what GEORGE did. These are all the cases, each checked by
+  running the program both ways:
+  - **`max`**: the sheets give the wrong sign when the second number is
+    larger (`2, 3 max` is -3 there); the flow diagram carries an amendment.
+    The manual: "a b max gives the greater of a and b".
+  - **The single shot after `√` of a negative number**: the stop table says
+    it "resumes giving result zero"; the sheets give 0.5, while the other
+    routines the table says the same of, ÷ rem log exp and pow, all give 0
+    on the sheets too, which makes √ look like a slip of this version.
+  - **`0 ÷ 0`**: the stop table lists "divisor zero (÷)" as a stop, resumed
+    giving zero, with no exception for a zero dividend. Hamblin's divide
+    sends a zero dividend straight to standardise before it looks at the
+    divisor (flow diagram p.20), so on the sheets `0, 0 ÷` gives 0 with no
+    stop. Here it stops on 1 4-24x like any zero divisor, and a single shot
+    gives 0. (This followed the code until the second independent review:
+    it had been put among the cases where the manual is silent, but the
+    stop table is specific.)
+  - **`rem` by a whole divisor of 2^15 or more**: the manual defines
+    `a b rem` as "x where nb + x = a, n and b being integers and 0 <= x <
+    b". Hamblin's fetch integer takes the divisor's exponent mod 16, so on
+    the sheets `7, 32768 rem` divides by 1 and gives 0, which no n
+    satisfies. Here a whole b of 2^15 or more (and its negative, which
+    stops on 1 30-16x as the table says) is done by the definition: x is
+    formed exactly and rounded by standardise, as Hamblin's rem rounds its
+    result (`functions::rem_by_definition`; below 2^15 the two agree word
+    for word on 200,000 random dividends). A divisor that is not a whole
+    number, which the definition excludes, is still taken as Hamblin's
+    fetch integer takes it (`7, 3.6 rem` divides by 4). The 2^15 limit of
+    section 1.9 (v) is for indexing numbers (suffixes, skip numbers and
+    repetition ranges), which it lists; it does not name rem's divisor.
+  - **`>` on words with a zero mantissa and a non-zero exponent**, which
+    `&`, `∨` and `~` can make: the manual says "a b > gives truth if a > b",
+    and such a word is zero, so `.000000001, 2, 3 neg & >` (a tiny number
+    against such a zero) is truth (-1) here. Hamblin's `>` subtracts
+    through the add routine, which takes the zero mantissa with the larger
+    exponent as a number and gives falsehood (0) on the sheets. Comparing
+    values is the manual's statement; `=` compares whole words, as p.22
+    has it, because the manual's "a b = gives truth if a = b" does not
+    separate the two for any standardised number and the code is the only
+    evidence for the others.
 - **Where the manual is silent, the interpreter follows Hamblin's code**,
   word for word, because it is the only evidence: rounding in every
   operation, the punch's conversion, numerals and data cards, the fetch of
-  indexing numbers, `0 ÷ 0`, copying from an empty accumulator, sin and cos
-  of large arguments, the all-ones word.
+  indexing numbers and of rem's fractional divisors, copying from an empty
+  accumulator, sin and cos of large arguments, the all-ones word, the
+  repetition increment (decision 5) and the word a single shot leaves after
+  overflow (decision 3).
 - **The sheets exactly, slips and all, are `george deuce george`**: Hamblin's
   translator on the simulated DEUCE is the record of the penultimate
   version, and no rule above changes it.
@@ -62,8 +98,9 @@ operation, which very probably survived into the final version.
    word: 200,145 of 200,145 random numerals, 180,105 of 180,105 random
    cards, the stop 4 9-24 included (`tests/numeral_words.rs`). (Until
    these were traced, both went through f64 and were rounded to the
-   nearest; what is still worked out in f64, the repetition count and the
-   I.D. keys, goes to the nearest word as `number::ROUNDING` says.)
+   nearest; what is still worked out in f64, the numbers given for the
+   I.D. keys, goes to the nearest word as `number::ROUNDING` says, and one
+   out of range is taken as zero, as `george deuce george --keys` sets it.)
    **The functions √ log exp pow sin cos rem neg
    and mod are done word for word as Hamblin's routines do them**
    (`src/functions.rs`, findings 18-24): √ by Newton's iteration with the
@@ -113,7 +150,15 @@ operation, which very probably survived into the final version.
    gives stop 3 14-21x. So does one whose exponent would fall below -512:
    the manual has no stop for underflow, but Hamblin's code gives 3 14-21x
    for `R 4 ÷` with 1e-154 read in, and 7 30-21x for `1000 neg exp`, so
-   these do too. (This was zero until the independent review.)
+   these do too. (This was zero until the independent review.) A single
+   shot resumes with standardise's own word: `3_11 14-21` puts e·2^21 where
+   e·2^22 belongs, so the exponent field is e halved, rounded down, and the
+   mantissa is the standardised one (`number::halved`). `R R ×` with 1e-154
+   read in twice resumes with 6.70391e-155, as on Hamblin's code. (Until the
+   second independent review the value was halved through f64, which gave
+   1.34078e-154 there.) Checked word for word, stops and resumed words, on
+   random + - × ÷ near both ends of the exponent range
+   (`tests/function_words.rs`, `arithmetic_resumes_word_for_word`).
 
 4. **Indexing numbers** (suffixes, skip numbers, ranges of repetition) go
    through Hamblin's "fetch integer" (`functions::fetch_integer`, RUNNING-
@@ -131,12 +176,24 @@ operation, which very probably survived into the final version.
 
 5. **`a b rep (x)`** takes a and b from the accumulator, sets x to a, and
    enters a link with a count-down of b - a held in P1-16. Each `]` with the
-   count above zero adds 1 to x and goes back to the symbol after
+   count above zero steps x and goes back to the symbol after
    `rep (x)`. At zero the link is removed and the program carries on, with x
    left at b if the body did not change it. *Settled by the flow diagrams, pp. 23, 26-27:* there is no test
    on entry, so the body is always obeyed at least once. When a > b the
    16-digit count wraps round to a repetition of about 65536 - (a - b)
-   passes (medium confidence).
+   passes (medium confidence). **The step is Hamblin's increment, word for
+   word** (`machine::rep_increment`, RUNNING-GEORGE.md finding 30): x is
+   fetched from the store again, so a value the body gave it is stepped, and
+   one unit is added in x's own scale by an instruction built with x's
+   exponent in it. The manual says only that x goes "in unit steps"; changing
+   x in the body is not described. For 1/2 <= |x| < 2^20 (and zero) that is
+   x + 1, rounded by standardise. From 2^20 up to 2^30 nothing is added, and
+   from 2^31 to 2^32 the sum changes sign (each 32 octaves the same again).
+   For 0 < |x| < 1/2 the built instruction is wrong and Hamblin's code goes
+   astray (`1, 2 rep (i) i (P) ; .3 (i) ; ]` punches 1 and comes to rest on
+   1 19-25x, which is no stop in the table); the interpreter stops there,
+   with a stop of its own that says so. (Until the second independent review
+   this was x + 1 in f64, which gave 1.3 for that program.)
 
 6. **Truth.** *Settled by the flow diagrams, pp. 22 and 25:* `=` and `>`
    leave the word with only the sign digit (-1) for truth and zero for
@@ -192,13 +249,17 @@ so a question can be answered by running a G-program both ways:
   5). The routine ("fetch integer", 12/6) shifts by the exponent mod 16, so
   this holds only from one half up to 2^15: `7, .4 rem` gives 7 because .4
   is taken as 26 (finding 23; this was "divisor 0, no stop" until rem was
-  traced). The manual's note says only that n and b are integers. Adopted,
-  word for word.
+  traced). The manual's note says that n and b are integers, so a
+  fractional divisor is outside it: adopted, word for word. A whole divisor
+  of 2^15 or more is inside it, and follows the manual (`7, 32768 rem`
+  gives 7 here, 0 on the sheets: see "Which source wins").
 - **`dup` after `;`** duplicates the number below, not the one cancelled:
   `5, 9 ; dup` gives 5, 5 on both. The TS16 reading of the flow diagrams was
   wrong, as the decision not to adopt it assumed.
-- **`=` and `>`** agree on every case tried; `>` is strict, and `=` compares
-  whole words (decision 6).
+- **`=` and `>`** agree on every case tried but one; `>` is strict, and `=`
+  compares whole words (decision 6). The one: `>` with a zero-mantissa word
+  of non-zero exponent, where the interpreter compares values, as the
+  manual says ("Which source wins").
 - **`rep`**: `5, 5 rep` runs once and `3, 1 rep` wraps to 65535 passes on
   both, as decision 5 says.
 - **`~`** gives the same word on both. Hamblin's punch prints the all-ones
@@ -212,10 +273,11 @@ so a question can be answered by running a G-program both ways:
   number away stops on 1 30-21x, which is what the stop table says: "has
   instructed taking number from empty accumulator". Adopted. Found by running
   random programs both ways.
-- **`0 ÷ 0` is 0, with no stop.** Flow diagram p. 20 sends a zero dividend
-  straight to standardise before the divisor is looked at, and Hamblin's
-  code does that; `1 ÷ 0` still stops on 1 4-24x. Adopted. Found by running
-  random programs both ways.
+- **`0 ÷ 0` is 0, with no stop, on Hamblin's code.** Flow diagram p. 20
+  sends a zero dividend straight to standardise before the divisor is
+  looked at. This was adopted when random programs found it, and reversed
+  after the second independent review: the stop table's "divisor zero (÷)"
+  is specific, so the interpreter stops (see "Which source wins").
 - **sin and cos of large arguments** are 0 on Hamblin's code outside
   -2^21 <= x < 2^21, the range of a 22-digit signed fixed-point word: 2097151
   sin is -0.320808 there and 2097152 sin is 0, while -2097152 sin is not 0.
@@ -232,8 +294,9 @@ so a question can be answered by running a G-program both ways:
   Hamblin's code (TS16 still holds the first approximation) and 0 here, as
   the manual's stop table says ("resumes giving result zero"). The model
   in `functions::sqrt` gives Hamblin's 0.5; `machine.rs` keeps the
-  manual's 0, by the rule in "Which source wins" above. (`max` differs
-  too, for the same reason: see ERRATA.md.)
+  manual's 0, by the rule in "Which source wins" above. (`max`, `0 ÷ 0`,
+  rem by whole divisors of 2^15 or more and `>` on zero-mantissa words
+  differ too, for the same reason: see that list and ERRATA.md.)
 
 Still open:
 

@@ -222,6 +222,40 @@ rounded to the nearest with halves going up, so 3.5 counts as 4 and the
 count is 5 - 4 = 1: two passes. The variable itself goes up from 3.5. This
 is what Hamblin's own code does, run on the DEUCE simulator.
 
+The manual does not say what happens if the body changes the variable.
+On Hamblin's code `]` fetches the variable from the store again and adds
+one unit to whatever it finds, so the change counts, but not the count:
+
+```george
+1, 3 rep (i) i (P) ; 1.5 (i) ; ]    # the body sets i: ] steps what it finds
+```
+```console
+$ george run programs/07-step.george
+1
+2.5
+2.5
+```
+
+His step adds 1 in the variable's own scale, with an instruction built
+from its binary exponent. For a variable of size less than a half the
+instruction comes out wrong, and his code goes off into the wrong
+instructions and comes to rest on a stop that is in no table. `george`
+stops there instead, and says why:
+
+```george
+1, 2 rep (i) i (P) ; .3 (i) ; ]     # below a half: Hamblin's code goes astray
+```
+```console
+$ george run programs/07-step-astray.george
+1
+stop none: repetition variable below 1/2 stepped by ] (not in the stop table: Hamblin's code goes astray here) (the variable is 0.3)
+  at symbol 12 "]", line 1, column 31
+```
+
+(It does nothing useful for very large variables either: from about a
+million, 2²⁰, the step adds nothing at all. Decision 5 in DECISIONS.md
+has the details.)
+
 When a is greater than b, the body is obeyed once, and then the count,
 which the machine kept in sixteen binary digits, has wrapped round to a
 very large number. `--limit` stops `george` after a given number of

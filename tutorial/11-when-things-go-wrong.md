@@ -53,6 +53,7 @@ reports each one:
 1, 0 rem (P) ;             # divisor zero
 1000 exp (P) ;             # result too large
 2 neg, .5 pow (P) ;        # fractional power of a negative number
+0, 0 ÷ (P) ;               # zero divided by zero: a stop too
 ```
 ```console
 $ george run programs/11-single-shot.george --single-shot
@@ -74,9 +75,17 @@ stop 7 30-21x: result exceeds permissible magnitude (exp or pow)
 stop 5 30-21x: fractional power of negative number (pow)
   at symbol 34 "pow", line 6, column 11 (single shot: resumes giving result zero)
 0
+stop 1 4-24x: divisor zero (÷) or argument negative (√)
+  at symbol 40 "÷", line 7, column 6 (single shot: resumes giving result zero)
+0
 ```
 
-Each function that failed gave zero, as the table says. Overflow resumes
+Each function that failed gave zero, as the table says. `0, 0 ÷` stops
+like any other zero divisor, because the table says "divisor zero" and
+nothing more. Hamblin's own code, run on the DEUCE simulator, does not:
+its divide sends a zero dividend straight on and gives 0 without looking
+at the divisor. Where the manual is specific, `george` follows the manual
+(DECISIONS.md, "Which source wins"). Overflow resumes
 differently, "with exponent halved":
 
 ```george

@@ -4,3 +4,4 @@
 1, 0 rem (P) ;             # divisor zero
 1000 exp (P) ;             # result too large
 2 neg, .5 pow (P) ;        # fractional power of a negative number
+0, 0 ÷ (P) ;               # zero divided by zero: a stop too

@@ -10,9 +10,8 @@
 //! `div_words`, all ending in `standardise`), and so are the conversions:
 //! numerals at translation time (`numeral_word`), data cards (`read_word`)
 //! and the punch's six decimal figures (`punch_word`). The functions are
-//! in `functions.rs`. What is still worked out in f64 (the count of a
-//! repetition, the I.D. keys, the single shot after overflow) is brought
-//! back to 22 digits as `ROUNDING` says; see DECISIONS.md.
+//! in `functions.rs`. What is still worked out in f64 (the I.D. keys) is
+//! brought back to 22 digits as `ROUNDING` says; see DECISIONS.md.
 
 /// Digits after the binary point of the mantissa.
 pub const FRACTION_BITS: i32 = 21;
@@ -39,8 +38,12 @@ pub struct Num {
     pub exponent: i32,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct Overflow;
+/// A result whose exponent is out of range (stop 3 14-21x). It carries the
+/// word Hamblin's code stores if the operator resumes with a single shot,
+/// "with exponent halved": `3_11 14-21` puts e·2^21 where e·2^22 belongs
+/// (see `standardise`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Overflow(pub Num);
 
 impl Num {
     pub const ZERO: Num = Num {
@@ -53,7 +56,7 @@ impl Num {
             return Ok(Num::ZERO);
         }
         if !x.is_finite() {
-            return Err(Overflow);
+            return Err(Overflow(Num::ZERO));
         }
         // x = f × 2^e with 0.5 <= |f| < 1
         let mut e = x.abs().log2().floor() as i32 + 1;
@@ -80,13 +83,10 @@ impl Num {
             m = -(1 << FRACTION_BITS);
             e -= 1;
         }
-        if e > EXP_MAX {
-            return Err(Overflow);
-        }
-        if e < EXP_MIN {
-            // Hamblin's code stops on 3 14-21x here too: `R 4 ÷` with 1e-154
-            // read in does (sources/deuce/RUNNING-GEORGE.md).
-            return Err(Overflow);
+        if !(EXP_MIN..=EXP_MAX).contains(&e) {
+            // Hamblin's code stops on 3 14-21x below the range too: `R 4 ÷`
+            // with 1e-154 read in does (sources/deuce/RUNNING-GEORGE.md).
+            return Err(Overflow(halved(m as i32, e)));
         }
         Ok(Num {
             mantissa: m as i32,
@@ -144,13 +144,6 @@ impl Num {
     /// The sign digit: how a relation's "truth" is shown.
     pub fn is_negative(self) -> bool {
         self.mantissa < 0
-    }
-
-    /// The value on overflow when the operator resumes with a single shot:
-    /// "S.S. resumes with exponent halved" (stop 3 14-21x).
-    pub fn halved_exponent(x: f64) -> Num {
-        let e = x.abs().log2().floor() as i32 + 1;
-        Num::from_f64(x / 2f64.powi(e) * 2f64.powi(e / 2)).unwrap_or(Num::ZERO)
     }
 
     /// As an integer for "indexing" purposes (suffixes, skip numbers, ranges
@@ -312,9 +305,20 @@ pub fn standardise(mut r: i64, mut e: i32) -> Result<Num, Overflow> {
     r >>= 1;
     let mantissa = ((r >> 32) as i32) << 10 >> 10;
     if !(EXP_MIN..=EXP_MAX).contains(&e) {
-        return Err(Overflow);
+        return Err(Overflow(halved(mantissa, e)));
     }
     Ok(Num { mantissa, exponent: e })
+}
+
+/// The word standardise stores when the operator resumes after 3 14-21x
+/// (`3_8 26-27` stops, `3_11 14-21`): the exponent e·2^22 in TS14 goes to
+/// the low word as e·2^21, and the pack (`3_12 21-22(20)`) brings its top
+/// ten digits into P1-10, so the exponent field is e halved, rounded down,
+/// taken in ten digits; the mantissa is the standardised one. This is
+/// `functions::standardise`'s resumed word too.
+pub fn halved(mantissa: i32, e: i32) -> Num {
+    let field = ((e << 21) as u32) >> 22;
+    Num::from_word(((mantissa as u32) << 10) | field)
 }
 
 /// The coefficients of the series punch translate sums with the library
@@ -553,7 +557,7 @@ pub fn read_word(card: Card) -> Result<u32, Overflow> {
         e -= 1;
     }
     if !(EXP_MIN..=EXP_MAX).contains(&e) {
-        return Err(Overflow);
+        return Err(Overflow(Num::ZERO));
     }
     let h = (r >> 32) as u32;
     Ok(h & !0x3ff | (e as u32 & 0x3ff))

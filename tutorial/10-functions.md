@@ -100,6 +100,25 @@ routine shifts the number by its exponent taken modulo 16, which is right
 only from one half up to 2¹⁵: `7, .4 rem` is `7, 26 rem`, which is 7.
 Better not to rely on it.
 
+A whole b of 2¹⁵ or more is inside the manual's definition, and `george`
+follows the definition there:
+
+```george
+7, 32768 rem (P) ;         # a whole divisor of 2^15 or more
+100000, 32768 rem (P) ;    # 100000 = 3 × 32768 + 1696
+7 neg, 32768 rem (P) ;     # -7 = -1 × 32768 + 32761
+```
+```console
+$ george run programs/10-rem-large.george
+7
+1696
+32761
+```
+
+Hamblin's routine would fetch 32768 as 1 and give 0 for all three, which
+no n in the definition allows; the manual is the better evidence of what
+GEORGE did (DECISIONS.md, "Which source wins").
+
 ## Powers
 
 `pow` raises a to the power b. For a negative a, b must be a whole number;

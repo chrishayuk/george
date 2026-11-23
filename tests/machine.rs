@@ -228,12 +228,91 @@ fn sin_and_cos_of_large_arguments_are_zero_as_on_hamblins_code() {
     assert_eq!(punched("0 sin (P)"), ["-2.98023e-8"]);
 }
 
-/// Flow diagrams p. 20, and Hamblin's own code: a zero dividend gives zero
-/// before the divisor is tested, so 0 ÷ 0 does not stop; 1 ÷ 0 does.
+/// The manual's stop table lists "divisor zero (÷)", resumed giving zero,
+/// and the manual wins over Hamblin's code (DECISIONS.md, "Which source
+/// wins"): his divide sends a zero dividend to standardise before it looks
+/// at the divisor (flow diagrams p.20), so on DEUCE 0 ÷ 0 gives 0 with no
+/// stop. Here it stops like any zero divisor.
 #[test]
-fn zero_divided_by_zero_is_zero() {
-    assert_eq!(punched("0, 0 ÷ (P)"), ["0"]);
+fn zero_divided_by_zero_stops_as_the_manual_says() {
+    assert_eq!(stop_of("0, 0 ÷ (P)"), machine::DIVISOR_ZERO.indication);
     assert_eq!(stop_of("1, 0 ÷"), machine::DIVISOR_ZERO.indication);
+    let ss = Options {
+        single_shot: true,
+        ..Options::default()
+    };
+    let o = run("0, 0 ÷ (P)", &ss);
+    assert!(o.stop.is_none());
+    assert!(matches!(&o.events[0], Event::Resumed(s) if s.kind == machine::DIVISOR_ZERO));
+    assert_eq!(Card::of(o.punched()[0]).decimal(), "0");
+}
+
+/// rem by a whole divisor of 2^15 or more follows the manual's definition
+/// ("nb + x = a, n and b being integers and 0 <= x < b"), not Hamblin's
+/// fetch integer, which takes 32768 as 1 and gives 0 (DECISIONS.md, "Which
+/// source wins"). A fractional divisor, which the manual excludes, is still
+/// rounded as his code does.
+#[test]
+fn rem_by_a_large_whole_divisor_follows_the_manual() {
+    assert_eq!(punched("7, 32768 rem (P)"), ["7"]);
+    assert_eq!(punched("100000, 32768 rem (P)"), ["1696"]);
+    assert_eq!(punched("7 neg 32768 rem (P)"), ["32761"]);
+    assert_eq!(punched("2.5, 65536 rem (P)"), ["2.5"]);
+    assert_eq!(punched("1048576 dup × 1594323 rem (P)"), ["1119730"]);
+    assert_eq!(stop_of("7, 32768 neg rem"), machine::REM_DIVISOR.indication);
+    // below 2^15 Hamblin's rem and the definition agree word for word
+    assert_eq!(punched("7, 32767 rem (P)"), ["7"]);
+    assert_eq!(punched("7, 3.6 rem (P)"), ["3"]);
+}
+
+/// `a b >` "gives truth if a > b" (manual), on the values: a word with a
+/// zero mantissa and a non-zero exponent, as `&` can make, is zero. Hamblin's
+/// code compares through the subtract routine and gives falsehood here
+/// (DECISIONS.md, "Which source wins").
+#[test]
+fn greater_than_compares_values_as_the_manual_says() {
+    // .000000001 2 3 neg &: mantissa 0, exponent of 2's word & -3's
+    assert_eq!(punched(".000000001, 2, 3 neg & > (P)"), ["-1"]);
+    assert_eq!(punched("2, 3 neg & 0 > (P)"), ["0"]);
+    assert_eq!(punched("0, 2, 3 neg & > (P)"), ["0"]);
+}
+
+/// The repetition increment word for word (tracks 12/12-12/13): the stored
+/// variable is stepped in its own scale, a value the body gave it included.
+/// Below 1/2 (other than zero) Hamblin's code goes astray, and the
+/// interpreter stops (RUNNING-GEORGE.md, finding 30).
+#[test]
+fn the_repetition_increment_as_hamblins_code_does_it() {
+    assert_eq!(punched("1, 3 rep (i) i (P) ; 1.5 (i) ; ]"), ["1", "2.5", "2.5"]);
+    assert_eq!(punched("1, 2 rep (i) i (P) ; .75 (i) ; ]"), ["1", "1.75"]);
+    assert_eq!(punched("1, 2 rep (i) i (P) ; .75 neg (i) ; ]"), ["1", "0.25"]);
+    // from 2^20 up to 2^30 they do not step
+    assert_eq!(punched("1, 2 rep (i) i (P) ; 2097152 (i) ; ]"), ["1", "2097150"]);
+    let o = run("1, 2 rep (i) i (P) ; .3 (i) ; ]", &Options::default());
+    assert_eq!(o.punched().len(), 1);
+    assert_eq!(o.stop.unwrap().kind, machine::REP_ASTRAY);
+    assert_eq!(stop_of("1, 2 rep (i) .3 (i) ; ] ;"), machine::REP_ASTRAY.indication);
+}
+
+/// A single shot after 3 14-21x stores standardise's word with the exponent
+/// field e·2^21 where e·2^22 belongs: the exponent halved, rounded down.
+#[test]
+fn overflow_resumes_with_hamblins_word() {
+    let ss = Options {
+        single_shot: true,
+        keys: vec![],
+        ..Options::default()
+    };
+    let o = Machine::new().run(&parse("R R × (P) ;").unwrap(), &ss);
+    assert!(o.stop.is_some());
+    let mut m = Machine::new();
+    m.cards.extend([
+        Card::from_decimal("1e-154").unwrap(),
+        Card::from_decimal("1e-154").unwrap(),
+    ]);
+    let o = m.run(&parse("R R × (P) ;").unwrap(), &ss);
+    assert!(o.stop.is_none());
+    assert_eq!(Card::of(o.punched()[0]).decimal(), "6.70391e-155");
 }
 
 /// Hamblin's own code: copying from an empty accumulator gives 0; taking a

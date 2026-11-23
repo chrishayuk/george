@@ -77,3 +77,42 @@ failures on Hamblin's code are his or the reconstruction's; the P31
 assignment against an original deck, since none survives; the multiplier
 and divider's behaviour part-way through an operation; and chapter 14's
 history against its primary publications.
+
+# Second review
+
+OpenAI Codex CLI (codex-cli 0.166.0) reviewed the repository again on 23
+November 2026, after Hamblin's translator had been run on the simulator and
+the interpreter's arithmetic, punch, numerals, data cards and functions had
+been rebuilt word for word from it. It changed no files.
+
+It ran every build and test suite (all passed), re-ran the word-for-word
+tests with new seeds (all agreed), a fresh fuzz seed (2,000 the same), and
+112,000 boundary probes of its own. It found the first review's findings
+dealt with as recorded here.
+
+**Confirmed independently.** The multiplier model against the Logical
+Design Manual, pp. 60-65; DS21's carries and the shifts against the
+Programming Manual and the Logical Design Manual, which on p. 58 describes
+the odd-first shift that loses one digit and doubles another, the mechanism
+behind Hamblin's addition. Hamblin's hand amendment to the `wait` keyword is
+on flow diagram p. 9. The four corrections match the literal sheet cells and
+the flow diagrams' alternatives. Of ten new transcription spot-checks, nine
+agree and the tenth was already marked doubtful.
+
+| # | Finding | Done |
+| --- | --- | --- |
+| 1 | The single shot after overflow or underflow was rebuilt from the value, not Hamblin's word (`R R ×` with 1e-154 gave 1.34078e-154 against 6.70391e-155) | The stop now carries the word standardise leaves; 5,005 of 5,005 agree per operation at boundary exponents |
+| 2 | The fuzzer counted two runs as the same whenever both stopped without output, whatever the stop; 40 of 2,000 programs underflowed though the generator said they could not | It now compares the stop by its indication, and waits and resumed stops; the generator tracks the pending condition and each operation's working room |
+| 3 | Setting a repetition's variable in its body made Hamblin's code stop on 1 19-25x, which is in no stop table | Traced (RUNNING-GEORGE.md finding 30): `]` steps the stored value by a built shift that adds exactly 1 only for 0 <= e <= 20, and goes astray for 0 < \|x\| < 1/2. The interpreter does the same, stopping with "none" where the machine went astray |
+| 4 | `>` on a zero-mantissa word made by the logic operators differs | Kept as the manual says (a comparison of values), and listed |
+| 5 | "Which source wins" not applied consistently: `0 ÷ 0` is a stop in the manual's table, and `rem` has a definition the code breaks for whole divisors of 2^15 and more | Both now follow the manual; DECISIONS.md lists all five manual-first cases |
+| 6 | "Word for word" claimed more than agreement with the simulated, corrected sheets; "the sheets exactly, slips and all" contradicted the corrections | README says what the agreement rests on and what is chosen or inferred |
+| 7 | Stale references: chapter 15 on suffixes, MACHINE.md on the multiplier, and RUNNING-GEORGE.md findings 5, 8 and 9 cited by ERRATA.md but missing | Corrected; findings 5-9 restored as first written |
+
+After these, 5,000 fresh random programs (seed 2027) gave 4,993 the same in
+every respect, and the other 7 are `0 ÷ 0`, which differs on purpose.
+
+**What it could not check:** every transcription cell and flow-diagram
+path, an original deck, real DEUCE timings or results, the missing circuit
+figures of the Logical Design Manual, out-of-range division on a real
+divider, and chapter 14's history against its original publications.

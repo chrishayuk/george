@@ -52,6 +52,16 @@ stops! {
     DATA_WANTED = "1 11-6x, 1 7-16x", "data card wanted", None;
 }
 
+/// Not in the manual's table: `]` stepping a repetition variable of
+/// modulus less than 1/2 (other than zero). Hamblin's increment builds a
+/// wrong instruction and his code goes astray (`rep_increment`), ending on
+/// no particular stop; the interpreter stops here instead.
+pub const REP_ASTRAY: StopKind = StopKind {
+    indication: "none",
+    cause: "repetition variable below 1/2 stepped by ] (not in the stop table: Hamblin's code goes astray here)",
+    resume: None,
+};
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Stop {
     pub kind: StopKind,
@@ -211,17 +221,12 @@ impl Machine {
         Ok(())
     }
 
-    /// A result back into GEORGE's form, with the overflow stop.
-    fn result(&self, x: f64, at: usize, options: &Options, out: &mut Outcome) -> Step<Num> {
-        self.checked(Num::from_f64(x), x, at, options, out)
-    }
-
-    /// A result already in GEORGE's form, or the overflow stop; `x` is the
-    /// exact value, for the single-shot resumption with exponent halved.
-    fn checked(&self, n: Result<Num, Overflow>, x: f64, at: usize, options: &Options, out: &mut Outcome) -> Step<Num> {
+    /// A result in GEORGE's form, or the overflow stop; on a single shot
+    /// the word standardise stores "with exponent halved" (`Overflow`).
+    fn checked(&self, n: Result<Num, Overflow>, at: usize, options: &Options, out: &mut Outcome) -> Step<Num> {
         match n {
             Ok(n) => Ok(n),
-            Err(_) => {
+            Err(Overflow(resumed)) => {
                 self.resumable(
                     Stop {
                         kind: OVERFLOW,
@@ -231,7 +236,7 @@ impl Machine {
                     options,
                     out,
                 )?;
-                Ok(Num::halved_exponent(x))
+                Ok(resumed)
             }
         }
     }
@@ -258,14 +263,8 @@ impl Machine {
         match f {
             functions::Outcome::Word(w) => Ok(Num::from_word(w)),
             functions::Outcome::Stop { kind, resumed } => {
-                let (kind, resumed) = match kind {
-                    Fault::SqrtNegative => (DIVISOR_ZERO, 0),
-                    Fault::LogArgument => (LOG_ARGUMENT, resumed),
-                    Fault::ExpRange => (EXP_RESULT, resumed),
-                    Fault::Overflow => (OVERFLOW, resumed),
-                    Fault::FractionalPower => (FRACTIONAL_POWER, resumed),
-                    Fault::RemDivisor => (REM_DIVISOR, resumed),
-                };
+                let resumed = if kind == Fault::SqrtNegative { 0 } else { resumed };
+                let kind = fault_stop(kind);
                 self.resumable(
                     Stop {
                         kind,
@@ -388,16 +387,18 @@ impl Machine {
                         let n = match sym {
                             // + and - word for word as Hamblin's add routine does
                             // them, not rounded to nearest (DECISIONS.md 2)
-                            Sym::Add => self.checked(a.plus(b), x + y, at, options, out)?,
-                            Sym::Sub => self.checked(a.minus(b), x - y, at, options, out)?,
+                            Sym::Add => self.checked(a.plus(b), at, options, out)?,
+                            Sym::Sub => self.checked(a.minus(b), at, options, out)?,
                             // × and ÷ word for word as Hamblin's routines do them
                             // (DECISIONS.md 2)
-                            Sym::Mul => self.checked(a.times(b), x * y, at, options, out)?,
-                            // "A zero dividend goes straight to standardise" (flow diagrams
-                            // p. 20), before the divisor is looked at: 0 ÷ 0 is 0, no stop.
-                            Sym::Div if x == 0.0 => Num::ZERO,
+                            Sym::Mul => self.checked(a.times(b), at, options, out)?,
+                            // The manual's stop table: "divisor zero (÷)" stops, and a single
+                            // shot resumes giving zero. For 0 ÷ 0 too: Hamblin's code sends a
+                            // zero dividend straight to standardise (flow diagrams p.20)
+                            // before the divisor is looked at, and gives 0 with no stop; the
+                            // manual is specific, and wins (DECISIONS.md, "Which source wins").
                             Sym::Div if y == 0.0 => self.failed(DIVISOR_ZERO, at, options, out)?,
-                            Sym::Div => self.checked(a.over(b), x / y, at, options, out)?,
+                            Sym::Div => self.checked(a.over(b), at, options, out)?,
                             Sym::Max => {
                                 if x >= y {
                                     a
@@ -406,7 +407,14 @@ impl Machine {
                                 }
                             }
                             // rem and pow word for word as Hamblin's routines form
-                            // them (src/functions.rs; RUNNING-GEORGE.md, findings 18-24)
+                            // them (src/functions.rs; RUNNING-GEORGE.md, findings 18-24),
+                            // except rem by a whole divisor of 2^15 or more: Hamblin's
+                            // fetch integer takes its exponent mod 16 (32768 as 1), and
+                            // the manual's definition (nb + x = a, 0 <= x < b) wins
+                            // (DECISIONS.md, "Which source wins").
+                            Sym::Rem if functions::whole_beyond_fetch(b.to_word()) => {
+                                self.function(functions::rem_by_definition(a.to_word(), b.to_word()), at, options, out)?
+                            }
                             Sym::Rem => self.function(functions::rem(a.to_word(), b.to_word()), at, options, out)?,
                             _ => self.function(functions::pow(a.to_word(), b.to_word()), at, options, out)?,
                         };
@@ -511,8 +519,22 @@ impl Machine {
                         Some(Link::Subroutine { back }) => pc = back,
                         Some(Link::Repeat { var, body, count }) => {
                             if count > 0 {
-                                let next = self.plain[var as usize].to_f64() + 1.0;
-                                self.plain[var as usize] = self.result(next, at, options, out)?;
+                                // Hamblin's increment, word for word (`rep_increment`).
+                                let next = match rep_increment(self.plain[var as usize].to_word()) {
+                                    Ok(w) => Num::from_word(w),
+                                    Err(Some(w)) => self.checked(Err(Overflow(Num::from_word(w))), at, options, out)?,
+                                    Err(None) => {
+                                        return Err(Stop {
+                                            kind: REP_ASTRAY,
+                                            at: Some(at),
+                                            detail: Some(format!(
+                                                "the variable is {}",
+                                                crate::number::Card::of(self.plain[var as usize]).decimal()
+                                            )),
+                                        })
+                                    }
+                                };
+                                self.plain[var as usize] = next;
                                 self.links.push(Link::Repeat {
                                     var,
                                     body,
@@ -540,7 +562,10 @@ impl Machine {
                     }
                     Sym::Keys => {
                         let x = keys.next().unwrap_or(0.0);
-                        let n = self.result(x, at, options, out)?;
+                        // The operator sets a word on the I.D. keys; a number out of
+                        // range cannot be set, and is taken as zero, as `george deuce
+                        // george --keys` does.
+                        let n = Num::from_f64(x).unwrap_or(Num::ZERO);
                         self.push(n, at)?;
                     }
                     Sym::Read => {
@@ -634,6 +659,27 @@ impl Machine {
     }
 }
 
+/// The stop in the manual's table (section 2.4) for each way one of
+/// Hamblin's function routines can stop.
+pub fn fault_stop(f: Fault) -> StopKind {
+    match f {
+        Fault::SqrtNegative => DIVISOR_ZERO,
+        Fault::LogArgument => LOG_ARGUMENT,
+        Fault::ExpRange => EXP_RESULT,
+        Fault::Overflow => OVERFLOW,
+        Fault::FractionalPower => FRACTIONAL_POWER,
+        Fault::RemDivisor => REM_DIVISOR,
+    }
+}
+
+/// Whether a DEUCE indication ("NIS S-D[x]", as the console shows it) is
+/// one the stop table gives for `kind`.
+pub fn indication_is(kind: &StopKind, indication: &str) -> bool {
+    kind.indication
+        .split(", ")
+        .any(|i| i.split(' ').take(2).collect::<Vec<_>>().join(" ") == indication)
+}
+
 /// Truth is the word with only the sign digit, P32 (flow diagrams p. 22),
 /// which as a number is -1: "as constants "0" may be written to represent
 /// "falsehood" and "-1" (i.e. "1 neg") for "truth"."
@@ -642,5 +688,50 @@ fn truth_value(t: bool) -> Num {
         Num::from_word(1 << 31)
     } else {
         Num::ZERO
+    }
+}
+
+/// The repetition increment, word for word: what `]` does to the variable
+/// on recalling `rep` with repetitions still to make (tracks 12/12-12/13,
+/// flow diagrams p.27; sources/deuce/RUNNING-GEORGE.md, finding 30). The
+/// variable's word is fetched from the store again (`Q 12-16`), so a value
+/// the body gave it is what is stepped, and unpacked (`8_28 16-21`,
+/// `8_31 30-21`, `8_2 22-21`): its mantissa m in the high word, units of
+/// its last digit, and e·2^22 in the low word. The unit is P1 doubled by
+/// `24-14` obeyed from TS13, an instruction built from the template at
+/// 8_4 with e·P17 added to it (`8_23`, `8_27`, `8_1`, `8_4 8-25`): the
+/// transfer starts e m.c. later, so it lasts ((20 - e) mod 32) + 1 m.c.
+/// and doubles P1 that many times, 2^(21-e) for 0 <= e <= 20 (one unit in
+/// the variable's own scale). For e mod 32 = 21 it lasts 32 m.c. and the
+/// unit is shifted out: nothing is added (2^20 <= |x| < 2^21, and beyond,
+/// do not step). For e mod 32 = 22-30 the unit falls above P23 of the high
+/// word, which standardise never looks at: nothing is added. For e mod 32
+/// = 31 it is 2^22, which changes the sign: 2^31 <= |x| < 2^32 steps
+/// to a number of the other sign and twice the size. Above e = 31 the
+/// carry goes into the timing field, which only moves the transfer round
+/// the delay line: the step is as for e mod 32. The sum goes to
+/// standardise (`8_0`) with exponent e and is stored back (`Q 16-12`).
+/// 0 <= e <= 510 measured on the transcribed sheets (`rep_increment_words`
+/// in tests/function_words.rs).
+///
+/// `Err(None)`: for e < 0 (0 < |x| < 1/2) e·P17 is negative and borrows
+/// from the instruction's timing field: the next instruction is taken from
+/// the wrong place and control goes astray (it ends on whatever stopper
+/// or loop it falls into, 1 19-25x for 0.3; none of them in the manual's
+/// stop table). `Err(Some(word))`: the exponent left the range in
+/// standardise (only from e = 511): stop 3 14-21x, and the word stored on
+/// a single shot.
+pub fn rep_increment(w: u32) -> Result<u32, Option<u32>> {
+    let n = Num::from_word(w);
+    let e = n.exponent;
+    if e < 0 {
+        return Err(None);
+    }
+    let count = (20 - e).rem_euclid(32) + 1;
+    let unit = if count == 32 { 0 } else { 1u32 << count };
+    let high = (n.mantissa as u32).wrapping_add(unit) as i32;
+    match crate::number::standardise(i64::from(high) << 32, e) {
+        Ok(x) => Ok(x.to_word()),
+        Err(Overflow(x)) => Err(Some(x.to_word())),
     }
 }
