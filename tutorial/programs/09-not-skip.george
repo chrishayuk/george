@@ -1,0 +1,6 @@
+# a ≠ b written a b = ~, used in a skip.
+1, 3 rep (i)
+R R = ~ 1 ↑                # skip to mark 1 if the two are not equal
+0 (P) ; 2 ↑
+* 1 1 (P) ;
+* 2 ]

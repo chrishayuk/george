@@ -1,0 +1,207 @@
+{
+  "name": "george-language",
+  "displayName": "GEORGE",
+  "description": "Syntax highlighting, hover help from the 1958 manual, problems as you type and a run button for GEORGE, C. L. Hamblin's reverse-Polish programming scheme for the English Electric DEUCE (1957-58).",
+  "version": "0.1.0",
+  "publisher": "chrishayuk",
+  "license": "Apache-2.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chrishayuk/george"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "george",
+    "deuce",
+    "hamblin",
+    "reverse polish",
+    "retro",
+    "language server"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "languages": [
+      {
+        "id": "george",
+        "aliases": [
+          "GEORGE",
+          "george"
+        ],
+        "extensions": [
+          ".george"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "george",
+        "scopeName": "source.george",
+        "path": "./syntaxes/george.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "george.run",
+        "title": "Run Program",
+        "category": "GEORGE",
+        "icon": "$(play)"
+      },
+      {
+        "command": "george.runTrace",
+        "title": "Run Program with Trace",
+        "category": "GEORGE",
+        "icon": "$(debug-step-over)"
+      },
+      {
+        "command": "george.deck",
+        "title": "Show the Deck (george deck)",
+        "category": "GEORGE"
+      },
+      {
+        "command": "george.format",
+        "title": "Show the Printed Form (george format)",
+        "category": "GEORGE"
+      },
+      {
+        "command": "george.table",
+        "title": "Show the Coding Table (george table)",
+        "category": "GEORGE"
+      },
+      {
+        "command": "george.stops",
+        "title": "Show the Stops (george stops)",
+        "category": "GEORGE"
+      },
+      {
+        "command": "george.restartServer",
+        "title": "Restart Language Server",
+        "category": "GEORGE"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "george.run",
+          "when": "resourceLangId == george",
+          "group": "1_run@1"
+        },
+        {
+          "command": "george.runTrace",
+          "when": "resourceLangId == george",
+          "group": "1_run@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "george.run",
+          "when": "editorLangId == george"
+        },
+        {
+          "command": "george.runTrace",
+          "when": "editorLangId == george"
+        },
+        {
+          "command": "george.deck",
+          "when": "editorLangId == george"
+        },
+        {
+          "command": "george.format",
+          "when": "editorLangId == george"
+        },
+        {
+          "command": "george.restartServer",
+          "when": "editorLangId == george"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "george.run",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "editorTextFocus && editorLangId == george"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "george"
+      }
+    ],
+    "configuration": {
+      "title": "GEORGE",
+      "properties": {
+        "george.server.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a george-lsp program to use as the language server. Leave empty to use the one built into the extension."
+        },
+        "george.interpreter.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a george program to run programs with. Leave empty to use the one built into the extension."
+        },
+        "george.run.data": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasenameNoExtension}.in",
+          "description": "The data cards to give Run Program, one number to a line: passed as --data when the file exists. ${fileDirname} and ${fileBasenameNoExtension} are those of the program."
+        },
+        "george.run.keys": {
+          "type": "string",
+          "default": "",
+          "description": "Numbers set on the input keys, one taken for each I obeyed (--keys), such as 7,3."
+        },
+        "george.run.singleShot": {
+          "type": "boolean",
+          "default": false,
+          "description": "Carry on through resumable stops, as the operator could with a single shot (--single-shot)."
+        },
+        "george.run.cards": {
+          "type": "boolean",
+          "default": false,
+          "description": "Print each punched card as its twenty columns instead of in decimal (--cards)."
+        },
+        "george.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Log the messages exchanged with the language server."
+        }
+      }
+    },
+    "configurationDefaults": {
+      "[george]": {
+        "editor.semanticHighlighting.enabled": true,
+        "editor.wordBasedSuggestions": "off"
+      }
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "test:vscode": "node test/vscode/run.mjs",
+    "package": "node build.mjs && vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.24.0",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.1.0"
+  }
+}

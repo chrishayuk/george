@@ -1,0 +1,4 @@
+# Section 1.8, page 9: "to continue indefinitely reading in pairs of
+# numbers and punching out their sum". It ends when the cards run out,
+# on stop 1 11-6x, "data card wanted".
+* 0 R R + (P) ; 0 ↑

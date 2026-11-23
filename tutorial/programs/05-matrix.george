@@ -1,0 +1,6 @@
+# Put b(i,j) = a(i,j) squared, for i = 2 and j = 3: section 1.4.
+2 (i) ; 3 (j) ;
+5, i j||(a) ;              # a(2,3) = 5
+i j||a dup × i j||(b) ;    # b(2,3) = a(2,3) squared
+2, 3||b (P) ;
+i j||a j|x × (P) ;         # a(i,j) x(j), with x(3) still zero

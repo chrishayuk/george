@@ -1,0 +1,8 @@
+2 log (P) ;                # natural logarithm
+1 exp (P) ;                # e
+2, 10 pow (P) ;            # 2 to the power 10
+2, .5 pow (P) ;            # the square root of 2, by pow
+2 √ (P) ;                  # and by √
+3, 7 max (P) ;             # the greater
+3 neg mod (P) ;            # modulus
+3 neg neg (P) ;            # minus minus three

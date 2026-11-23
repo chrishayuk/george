@@ -1,0 +1,5 @@
+R (n) ; 1 n rep (x)                                # Example 2's prefix
+1, 20 R|(a)
+0, 1, 20 rep (j) j|a + ] 20 ÷ (P) ;
+0, 1, 20 rep (j) j|a dup × + ] 20 ÷ .5 pow (P) ;
+]                                                  # and its bracket

@@ -1,0 +1,2 @@
+3, 3 = ~ (P) ;             # not truth
+3, 4 = ~ (P) ;             # not falsehood

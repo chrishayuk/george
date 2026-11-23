@@ -1,0 +1,6 @@
+# Three times: if the input keys are clear, skip to mark 4.
+1, 3 rep (i)
+wait I 0 = 4 ↑
+1 (P) ; 5 ↑
+* 4 2 (P) ;
+* 5 ]

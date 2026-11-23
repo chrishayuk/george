@@ -1,0 +1,3 @@
+R R 6 ↓ (P) ;
+]
+* 6 dup × rev dup × + .5 pow ]

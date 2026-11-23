@@ -1,0 +1,7 @@
+# Subroutine 5 adds up the squares of 1 ... n, and uses x to count.
+# The main program uses x for its own purposes. The values clash.
+7 (x) ;
+3, 5 ↓ (P) ;
+x (P) ;
+]
+* 5 (n) ; 0, 1 n rep (x) x x × + ] ]

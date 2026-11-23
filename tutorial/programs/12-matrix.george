@@ -1,0 +1,5 @@
+R (n) ; 1 n 1 n R||(a) 1 n R|(x)             # ours: n, the matrix, the vector
+1 n rep (i) 0, 1 n rep (j) i j||a j|x × + ] i|(b) ; ]
+1 n P|(b)                                    # ours
+0, 1 n rep (i) 1 n rep (j) i j||a i|x j|x × × + ] ] (P) ;
+0, 1 n rep (i) 0, 1 n rep (j) i j||a j|x × + ] i|x × + ] (P) ;

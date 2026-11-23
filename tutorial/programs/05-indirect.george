@@ -1,0 +1,5 @@
+# a(j(k)), written k|j|a: a suffix that is itself suffixed.
+4 (k) ;
+6, k|(j) ;                 # j4 = 6
+11, 6|(a) ;                # a6 = 11
+k|j|a (P) ;

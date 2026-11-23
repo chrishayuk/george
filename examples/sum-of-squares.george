@@ -1,0 +1,4 @@
+# The sum of the squares of the natural numbers from 1 to 100.
+# Manual, section 1.6, page 6. The manual leaves the sum in the
+# accumulator; the (P) that punches it is ours.
+0, 1, 100 rep (j) j j × + ] (P) ;

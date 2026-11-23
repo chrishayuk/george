@@ -1,0 +1,5 @@
+# n! by a subroutine that calls itself.
+R 1 ↓ (P) ; ]
+* 1 dup 1 > ~ 2 ↑                  # n not more than 1: n! is n
+dup 1 - 1 ↓ ×                      # otherwise n (n - 1)!
+* 2 ]

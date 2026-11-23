@@ -1,0 +1,2 @@
+stop 7 25-29: program calls for skip to non-existent mark (mark number 30)
+  at symbol 5 "↓", line 1, column 9

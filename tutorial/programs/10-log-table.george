@@ -1,0 +1,3 @@
+# Common logarithms of 1 ... 10, as log x / log 10.
+10 log (λ) ;
+1, 10 rep (x) x log λ ÷ (P) ; ]

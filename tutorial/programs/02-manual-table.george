@@ -1,0 +1,9 @@
+# The manual's examples of section 1.1, with a = 2, b = -3 and c = 5.
+2, 3 neg + neg (P) ;               # -(a + b)
+2, 3 neg + mod (P) ;               # |a + b|
+2 mod 3 neg mod + (P) ;            # |a| + |b|
+2, 3 neg + 5 + (P) ;               # a + b + c
+2, 3 neg 5 + + (P) ;               # the same, as a b c + +
+2, 3 neg + 5 × (P) ;               # (a + b)c
+2, 3 neg, 5 × + (P) ;              # a + bc
+2, 3 neg × 2, 3 neg ÷ + (P) ;      # ab + a/b

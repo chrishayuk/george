@@ -1,0 +1,6 @@
+# Five iterations of x = (x + y/x)/2 from 1: "Newton's method for the
+# square root of y". Manual, section 1.6, page 6. Setting y and punching
+# the result are ours.
+2 (y) ;
+1, 1, 5 rep (a) dup y rev ÷ + 2 ÷ ]
+(P) ;

@@ -1,0 +1,2 @@
+stop 1 30-21x (IA), 1 1-1x (II): program uses too many accumulator cells or has instructed taking number from empty accumulator (accumulator empty)
+  at symbol 9 "×", line 2, column 9

@@ -1,0 +1,2 @@
+10, 100 pow (P)            # 10 to the 100th: in range
+dup × (P) ;                # 10 to the 200th: out of range

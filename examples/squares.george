@@ -1,0 +1,3 @@
+# The squares of the natural numbers from 1 to 20, punched as calculated.
+# Manual, section 1.6, page 6, as printed.
+1, 20 rep (j) j j × (P) ; ]

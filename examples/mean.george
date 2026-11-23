@@ -1,0 +1,5 @@
+# Example 1, page 7: twenty numbers are read in, and their mean and root
+# mean square computed and punched out.
+1, 20 R|(a)                                   # read in data
+0, 1, 20 rep (j) j|a + ] 20 ÷ (P) ;           # calculate and punch mean
+0, 1, 20 rep (j) j|a dup × + ] 20 ÷ .5 pow (P) ;   # root mean square

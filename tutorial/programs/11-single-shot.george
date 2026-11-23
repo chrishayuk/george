@@ -1,0 +1,6 @@
+1, 0 ÷ (P) ;               # divisor zero
+2 neg √ (P) ;              # argument negative
+1 neg log (P) ;            # argument negative
+1, 0 rem (P) ;             # divisor zero
+1000 exp (P) ;             # result too large
+2 neg, .5 pow (P) ;        # fractional power of a negative number

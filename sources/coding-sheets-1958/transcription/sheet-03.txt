@@ -1,0 +1,98 @@
+# sheet 03 (PDF page 3). Heading: none written  (sheet no. 3)
+# columns: mc NIS S D C W T go
+# block 1: DL 5 track 12/5 cards 16-18
+# card rows (above the mc grid):
+Y  = 5P1 + 12P5
+# mc rows:
+0  1 0 30 - 0 1 -
+1  5 23 13 - 0 0 -
+2  4 0 24 - 1 28 -
+3  3 5 25 - 1 23 -
+4  4 22 21 1 6 19 -
+5  5 20 25 - 31 2 -
+6  4 22 21 1 9 8 -   # W/T written "9 (1) 8": "(1)" in brackets between W and T
+7  5 20 26 - 1 12 -
+8  1 2 30 - 0 25 -
+9  5 19 27 - 0 1 -
+10  4 30 18 - 1 2 -
+11  4 5 15 - 1 15 -
+12  5 1 1 - 0 3 -
+13  5 20 23 - 0 2 -
+14  4 30 13 - 0 3 -
+15  1 19 13 - 1 14 -
+16  6 4 25 - 0 0 -
+17  5 20 27 - 0 0 -
+18  6 21 27 - 1 1 -
+19  5 1 1 - 0 2 -
+20  5 19 23 - 1 1 -
+21  5 22 14 - 1 6 -
+22  = 7P22
+23  4 21 22 1 11 0 -
+24  5 5 26 - 0 1 -
+25  5 22 21 1 1 0 -
+26  = 16P22
+27  4 13 14 - 0 0 -
+28  4 10 1 - 1 5 -   # a dot before T 5
+29  4 4 24 - 0 1 -
+30  4 30 18 - 1 2 -
+31  7 27 23 - 1 2 -   # struck: S 24, D 22, W 0 (line drawn through them); 27 23 and W 1 written above
+# block 2: DL 6 track 12/6 cards 19-21
+# card rows (above the mc grid):
+Y  = 6P1 + 12P5
+# mc rows:
+0  6 25 26 - 0 10 -
+1  1 1 1 - 0 17 -
+2  6 21 20 2 0 1 -
+3  6 17 21 - 2 2 -
+4  = 15P5
+5  6 30 21 2 0 1 -
+6  6 25 14 - 0 1 -
+7  1 6 22 - 6 20 -
+8  6 30 19 2 0 1 -
+9  6 24 14 1 1 5 -
+10  6 25 22 - 1 14 -
+11  5 30 13 - 0 15 -
+12  6 30 21 2 0 8 -
+13  1 1 1 - 0 31 -
+14  1 6 22 - 13 13 -
+15  5 6 4 2 0 30 -   # W/T written "0 (14) 30" with a tick/slash after 30
+16  6 14 22 - 0 6 -
+17  6 6 13 - 1 2 -
+18  4 13 27 - 0 0 -
+19  6 1 1 - 0 2 -
+20  6 21 22 1 26 27 -   # W/T written "26 (1) 27"
+21  6 10 15 - 7 9 -
+22  3 16 22 - 0 4 -
+23  1 6 15 - 0 0 -
+24  7 24 14 1 2 6 -
+25  6 16 14 - 0 5 -
+26  7 25 15 - 0 0 -
+27  1 29 23 - 1 1 -
+28  6 13 1 - 0 0 -
+29  3 3 22 3 30 9 x   # W/T written "30 (15) 9"
+30  6 24 14 1 1 17 -
+# block 3: DL 7 track 12/7 cards 22-24
+# card rows (above the mc grid):
+Y  = 7P1 + 12P5
+# mc rows:
+2  7 21 27 - 1 9 -
+3  7 21 27 - 0 6 - ?   # T: "6" followed by a "5" with a stroke through it; read as 5 struck, 6 substituted; struck: 5. (Inference: this agrees with the flowchart p.22 correction to `>`, see NOTES-1-11.md)
+4  5 7 1 - 25 5 -
+6  1 7 15 - 9 17 -
+9  5 5 1 - 20 0 -
+10  - - - - - - -   # struck: whole row "7 30 16 - 0 4" struck through, nothing substituted
+11  7 29 16 - 0 3 -
+12  7 30 16 - 0 2 -
+13  7 19 21 - 0 3 -
+14  7 20 21 - 1 4 -
+15  1 21 16 - 0 3 -
+16  1 31 18 - 2 2 -
+17  7 16 14 - 0 0 -
+18  7 19 14 - 0 2 -
+20  7 20 14 - 0 0 -
+22  7 24 21 - 0 0 -
+23  1 7 15 - 0 0 -
+24  7 21 22 1 2 21 -
+25  7 16 15 - 0 3 -
+26  7 26 28 - 0 15 -
+31  7 18 22 - 0 1 - ?   # S: second digit 8 written heavily, possibly over another figure

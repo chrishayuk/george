@@ -1,0 +1,4 @@
+# The sum of squares from 1 to n for each n from 1 to 20, stored as
+# a(1) to a(20). Manual, section 1.6, page 7, as printed; the punching is ours.
+1, 20 rep (n) 0, 1 n rep (x) x x × + ] n|(a) ; ]
+1, 20 P|(a)

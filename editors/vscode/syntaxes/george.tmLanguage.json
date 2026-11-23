@@ -1,0 +1,190 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GEORGE",
+  "scopeName": "source.george",
+  "fileTypes": [
+    "george"
+  ],
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#mark"
+    },
+    {
+      "include": "#name"
+    },
+    {
+      "include": "#io"
+    },
+    {
+      "include": "#suffix"
+    },
+    {
+      "include": "#number"
+    },
+    {
+      "include": "#words"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#invalid"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "match": "(#).*$",
+      "name": "comment.line.number-sign.george",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.comment.george"
+        }
+      }
+    },
+    "mark": {
+      "comment": "* n: the head of a subroutine, or a place marker (sections 1.7, 1.8)",
+      "match": "(\\*)\\s*([0-9]+)",
+      "captures": {
+        "1": {
+          "name": "keyword.control.mark.george"
+        },
+        "2": {
+          "name": "entity.name.label.george"
+        }
+      }
+    },
+    "name": {
+      "patterns": [
+        {
+          "comment": "(P): punch the last cell",
+          "match": "(\\()\\s*(P)\\s*(\\))",
+          "name": "support.function.io.punch.george",
+          "captures": {
+            "1": {
+              "name": "punctuation.section.parens.begin.george"
+            },
+            "3": {
+              "name": "punctuation.section.parens.end.george"
+            }
+          }
+        },
+        {
+          "comment": "(a): a name, storing the last cell",
+          "match": "(\\()\\s*(theta|alpha|beta|gamma|lambda|mu|nu|[a-np-zθαβγλμν])\\s*(\\))",
+          "captures": {
+            "1": {
+              "name": "punctuation.section.parens.begin.george"
+            },
+            "2": {
+              "name": "variable.other.name.george"
+            },
+            "3": {
+              "name": "punctuation.section.parens.end.george"
+            }
+          }
+        },
+        {
+          "match": "\\([^)\\n]*\\)?",
+          "name": "invalid.illegal.name.george"
+        }
+      ]
+    },
+    "io": {
+      "patterns": [
+        {
+          "comment": "R| P| R|| P||: block read and punch",
+          "match": "[RP]\\|\\|?",
+          "name": "support.function.io.block.george"
+        },
+        {
+          "match": "R",
+          "name": "support.function.io.read.george"
+        },
+        {
+          "match": "I",
+          "name": "support.function.io.keys.george"
+        }
+      ]
+    },
+    "suffix": {
+      "match": "\\|\\|?",
+      "name": "keyword.operator.suffix.george"
+    },
+    "number": {
+      "match": "[0-9.]+",
+      "name": "constant.numeric.george"
+    },
+    "words": {
+      "comment": "A run of letters that is not a word is a sequence of variables, one per letter.",
+      "patterns": [
+        {
+          "match": "(?<![a-zθαβγλμν])(?:rep|wait|down|up)(?![a-zθαβγλμν])",
+          "name": "keyword.control.george"
+        },
+        {
+          "match": "[↓↑\\]]",
+          "name": "keyword.control.george"
+        },
+        {
+          "match": "(?<![a-zθαβγλμν])(?:neg|mod|log|exp|sqrt|sin|cos|pow|rem|max)(?![a-zθαβγλμν])",
+          "name": "support.function.george"
+        },
+        {
+          "match": "(?<![a-zθαβγλμν])(?:dup|rev)(?![a-zθαβγλμν])",
+          "name": "support.function.accumulator.george"
+        },
+        {
+          "match": "√",
+          "name": "support.function.george"
+        },
+        {
+          "match": "(?<![a-zθαβγλμν])(?:mul|div|not|and|or)(?![a-zθαβγλμν])",
+          "name": "keyword.operator.word.george"
+        },
+        {
+          "match": "(?<![a-zθαβγλμν])(?:theta|alpha|beta|gamma|lambda|mu|nu)(?![a-zθαβγλμν])",
+          "name": "variable.other.greek.george"
+        },
+        {
+          "match": "o",
+          "name": "invalid.illegal.letter.george"
+        },
+        {
+          "match": "[a-zθαβγλμν]",
+          "name": "variable.other.george"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "match": "[=>]",
+          "name": "keyword.operator.relational.george"
+        },
+        {
+          "match": "[~&∨]",
+          "name": "keyword.operator.logical.george"
+        },
+        {
+          "match": "[+\\-−×÷/]",
+          "name": "keyword.operator.arithmetic.george"
+        },
+        {
+          "match": ";",
+          "name": "keyword.operator.cancel.george"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.george"
+        }
+      ]
+    },
+    "invalid": {
+      "match": "[^\\s]",
+      "name": "invalid.illegal.george"
+    }
+  }
+}

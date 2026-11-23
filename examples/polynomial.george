@@ -1,0 +1,4 @@
+# e = a y² + b y + c, as Hamblin's GEORGE is usually quoted. Reading a, b,
+# c and y and punching e are ours.
+R (a) ; R (b) ; R (c) ; R (y) ;
+a y dup × × b y × + c + (e) (P) ;

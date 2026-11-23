@@ -1,0 +1,3 @@
+R R 6 ↓ (P) ;                       # main program
+]                                   # end of main program
+* 6 dup × rev dup × + .5 pow ]      # subroutine

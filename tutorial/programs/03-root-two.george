@@ -1,0 +1,3 @@
+2 √ (P)           # the square root of two
+dup × (P)         # squared
+2 - (P) ;         # less two

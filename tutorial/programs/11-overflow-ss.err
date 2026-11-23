@@ -1,0 +1,2 @@
+stop 3 14-21x: result of arithmetic operation exceeds permissible magnitude
+  at symbol 9 "×", line 3, column 5 (single shot: resumes with exponent halved)

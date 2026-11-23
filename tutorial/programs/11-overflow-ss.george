@@ -1,0 +1,3 @@
+# The same, carried on with a single shot.
+10, 100 pow (P)
+dup × (P) ;

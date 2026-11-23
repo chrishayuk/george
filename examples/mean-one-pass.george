@@ -1,0 +1,5 @@
+# Example 1, page 7, the alternative: mean and root mean square in a
+# single repetition.
+1, 20 R|(a)
+0, 0, 1, 20 rep (j) j|a + rev j|a dup × + rev ]
+20 ÷ (P) ; 20 ÷ .5 pow (P) ;

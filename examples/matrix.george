@@ -1,0 +1,8 @@
+# Section 1.6, page 7: b(i) = sum over j of a(i,j) x(j), for i from 1 to n,
+# and the quadratic form sum over i, j of a(i,j) x(i) x(j), both ways the
+# manual gives. Reading n, the matrix and the vector, and punching, are ours.
+R (n) ; 1 n 1 n R||(a) 1 n R|(x)
+1 n rep (i) 0, 1 n rep (j) i j||a j|x × + ] i|(b) ; ]
+1 n P|(b)
+0, 1 n rep (i) 1 n rep (j) i j||a i|x j|x × × + ] ] (P) ;
+0, 1 n rep (i) 0, 1 n rep (j) i j||a j|x × + ] i|x × + ] (P) ;

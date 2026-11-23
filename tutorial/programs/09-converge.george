@@ -1,0 +1,5 @@
+# Iterate x = (x + y/x)/2 from unity until successive values differ by
+# not more than e. Setting y and e and punching the result are ours.
+2 (y) ; .00001 (e) ;
+1 * 0 (x) y x ÷ + 2 ÷ dup x - mod e > 0 ↑
+(P) ;

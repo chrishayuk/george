@@ -1,0 +1,25 @@
+[package]
+name = "george"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "GEORGE, C. L. Hamblin's General Order Generator for the English Electric DEUCE (1957-58): a reverse-Polish programming scheme, reconstructed from its programming manual"
+
+[lib]
+name = "george"
+path = "src/lib.rs"
+
+[[bin]]
+name = "george"
+path = "src/main.rs"
+
+[dependencies]
+
+# The language server has its own crate so that the interpreter keeps no
+# dependencies. `cargo build` here builds only the interpreter.
+[workspace]
+members = ["lsp"]
+default-members = ["."]
+
+[profile.release]
+opt-level = 3

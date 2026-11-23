@@ -1,0 +1,8 @@
+# Halve n if it is even, otherwise put n = 3n + 1, until n is 1;
+# s counts the steps.
+27 (n) ; 0 (s) ;
+* 1 n 2 rem 0 = 2 ↑                # n even: to mark 2
+n 3 × 1 + (n) ; 3 ↑
+* 2 n 2 ÷ (n) ;
+* 3 s 1 + (s) ; n 1 = ~ 1 ↑        # n not 1: round again
+s (P) ;

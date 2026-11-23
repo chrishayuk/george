@@ -1,0 +1,6 @@
+# Punch 1/x for each x read, or 0 where x is zero.
+1, 4 rep (i)
+R (x) 0 = 8 ↑              # if x = 0 skip to mark 8
+1 x ÷ (P) ; 9 ↑            # otherwise 1/x, and skip over
+* 8 0 (P) ;
+* 9 ]

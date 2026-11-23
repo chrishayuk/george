@@ -1,0 +1,2 @@
+# a + b + c/(a + b), section 1.1, with a = 1, b = 3 and c = 2.
+1, 3 + dup 2 rev ÷ + (P) ;

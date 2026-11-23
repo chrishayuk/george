@@ -1,0 +1,12 @@
+# The Simpson vector with h/3 = 1/12 for 1/48:
+1, 12 ÷ 0|(s) 16|(s) 2 × 1, 7 rep (j) j 2 ×|(s) ]
+2 × 0, 7 rep (j) j 2 × 1 +|(s) ] ;
+# The main part:
+1, 5 R|(a)                       # read in values a1 ... a5
+1, 5 rep (i) i|a (a) ;           # repeat with a = a1 ... a5 in turn
+0, 0, 16 rep (j)                 # mark acc. space with zero, j from 0 to 16
+j 4 ÷ 1 + (x)                    # calculate argument
+dup × 2 ÷ neg exp x a × neg exp 1 + ÷   # calculate integrand
+j|s × + ]                        # multiply by Simpson coefficient and add
+i|(r) ; ]                        # store result; end outer repeat
+1, 5 P|(r)                       # punch results

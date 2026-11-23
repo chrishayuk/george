@@ -1,0 +1,2 @@
+stop 1 8-21x (IA), 1 3-3x (II): too many entries in link list (nested subroutines or repeats to higher than sixth order)
+  at symbol 18 "↓", line 4, column 11

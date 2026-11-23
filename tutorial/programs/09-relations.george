@@ -1,0 +1,4 @@
+3, 4 = (P) ;               # falsehood
+3, 3 = (P) ;               # truth
+4, 3 > (P) ;               # truth
+3, 4 > (P) ;               # falsehood

@@ -1,0 +1,11 @@
+target
+.DS_Store
+# the scanned documents and their page images: see sources/README.md
+sources/*/*.pdf
+sources/*/pages/
+node_modules
+*.vsix
+# copies of other people's web pages, kept locally for reference: see sources/deuce/README.md
+sources/deuce/ldm/
+sources/deuce/deucdocs.html
+.claude/

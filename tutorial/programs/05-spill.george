@@ -1,0 +1,6 @@
+5, 32|(a) ;                # a32 is b0
+0|b (P) ;
+6, 65|(a) ;                # a65 is c1
+1|c (P) ;
+9, 1 neg|(a) ;             # a(-1) is the last letter's ν31
+31|ν (P) ;

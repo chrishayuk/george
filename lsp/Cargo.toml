@@ -1,0 +1,10 @@
+[package]
+name = "george-lsp"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "A language server for GEORGE, C. L. Hamblin's reverse-Polish programming scheme for DEUCE (1957-58)"
+
+[dependencies]
+george = { path = ".." }
+serde_json = "1"

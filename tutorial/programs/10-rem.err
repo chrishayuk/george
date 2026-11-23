@@ -1,0 +1,2 @@
+stop 1 30-16x: divisor negative or zero (rem)
+  at symbol 10 "rem", line 2, column 10

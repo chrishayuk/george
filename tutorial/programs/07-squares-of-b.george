@@ -1,0 +1,5 @@
+# Put a(j) = b(j) squared, for j from 1 to n: section 1.6.
+4 (n) ;
+1 n R|(b)                  # this line is ours: b1 ... bn from cards
+1 n rep (j) j|b dup × j|(a) ; ]
+1 n P|(a)                  # and this one

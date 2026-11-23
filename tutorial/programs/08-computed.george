@@ -1,0 +1,5 @@
+# The subroutine number is read from a card: 1 squares, 2 cubes.
+1, 4 rep (i) R R ↓ (P) ; ]
+]
+* 1 dup × ]
+* 2 dup dup × × ]

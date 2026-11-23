@@ -1,0 +1,4 @@
+# The sine and cosine of 0, 15, 30, ... 90 degrees.
+3.14159265, 12 ÷ (θ) ;     # 15 degrees in radians
+0, 6 rep (k) k θ × sin (P) ; ]
+0, 6 rep (k) k θ × cos (P) ; ]

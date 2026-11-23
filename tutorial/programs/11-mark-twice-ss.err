@@ -1,0 +1,2 @@
+stop 3 2-2x (IA), 0 2-2x (II): mark number used twice (mark 1)
+  at symbol 9 "*", line 4, column 1 (single shot: second entry written over first in mark list)

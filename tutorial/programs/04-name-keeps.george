@@ -1,0 +1,2 @@
+5 (x) dup × (P) ;          # (x) leaves the 5 where it was
+x (P) ;

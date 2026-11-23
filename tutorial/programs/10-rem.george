@@ -1,0 +1,2 @@
+7, 2 rem (P) ;             # 7 = 3 × 2 + 1
+7, 2 neg rem (P) ;         # a negative divisor: a stop

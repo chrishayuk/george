@@ -1,0 +1,5 @@
+# 6 ↓ used as a diadic operator: the hypotenuse of 3, 4 and then of
+# that and 12, written a b 6 ↓ c 6 ↓.
+3, 4, 6 ↓ 12, 6 ↓ (P) ;
+]
+* 6 dup × rev dup × + .5 pow ]

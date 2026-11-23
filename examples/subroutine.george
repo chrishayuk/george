@@ -1,0 +1,5 @@
+# Section 1.7, page 9: read in two numbers and punch the square root of
+# the sum of their squares, using subroutine no. 6.
+R R 6 ↓ (P) ;                       # main program
+]                                   # end of main program
+* 6 dup × rev dup × + .5 pow ]      # subroutine

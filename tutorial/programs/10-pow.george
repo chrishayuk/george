@@ -1,0 +1,5 @@
+3 neg, 3 pow (P) ;         # a negative number to a whole power
+3 neg, 2 pow (P) ;
+4, .5 neg pow (P) ;        # a negative power
+0, 3 pow (P) ;
+0, 1 neg pow (P) ;         # zero to any power is zero

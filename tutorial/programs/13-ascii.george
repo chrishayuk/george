@@ -1,0 +1,2 @@
+R R 6 down (P) ; ]
+* 6 dup mul rev dup mul + .5 pow ]

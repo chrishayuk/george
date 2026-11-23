@@ -1,0 +1,3 @@
+3 (a) ; 4 (b) ;            # put a = 3 and b = 4
+a b + (c) ;                # put c = a + b
+c (P) ;

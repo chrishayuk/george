@@ -1,0 +1,3 @@
+1, 5 R|(x)                 # read x1 ... x5
+1, 5 P|(x)                 # punch them again
+3, 4 P|(x)                 # and x3, x4

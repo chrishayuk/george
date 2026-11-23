@@ -1,0 +1,44 @@
+# DEUCE library subroutines S06 and M12, coded for DL6 ("version 6": A = B = 6),
+# transcribed from the library sheets on David Green's archive:
+#   subs/m12.pdf, sheet S6/10012 "Flow diagram and coding for subroutine M12 -
+#     signed multiplication of two numbers with shift of two places" (NS t 9)
+#   subs/s06.pdf, sheet S6/10013 "Coding and flow diagram for subroutine S06 -
+#     sum a series" (NS t 10)
+# The library sheets write the DL as "A" (M12's DL in S06 as "B"); here A = B = 6.
+# GEORGE sheet 17 block 2 (track 15/0) says "[Deuce subroutines S06 and M12,
+# version 6, with additions as shown]" and writes only m.c. 10 and 28; the rest
+# of that track is these words. Read from the page images at 200 dpi by the
+# DEUCE-simulator agent; checked against each sheet's own flow diagram.
+# block 1: DL 6 track 15/0 cards library
+# --- S06 (occupies m.c. 0-9, 11, 18, 23, 26, 29-31; entry m.c. 18)
+0  6 15 13 - 0 0 -
+# 1: "store for I" (written by 13-A1 at m.c. 31)
+2  6 13 28 - 0 0 -
+3  6 30 21 - 0 1 -
+4  1 0 0 - 0 25 -     # the "waste instruction 1, 0-0, 0, 25 in m.c. 4" (exit to the link 1_31)
+5  6 28 26 - 0 0 -
+6  6 15 25 - 0 0 -
+7  6 13 15 - 0 0 -
+8  0 13 0 - 0 0 -
+9  6 6 13 - 0 1 -     # "B, A-13, 0, 1": parameter B (DL of M12) in NIS
+11  6 6 13 - 1 6 -    # the link M12 plants in 1_30: (A1 - 13), back to A6
+18  6 6 25 - 3 9 -    # entry: A23 - 25
+23  6 0 13 - 20 14 -  # basic fetch instruction I = (A, C-13, 20+p, 14), C and p added in
+26  6 21 25 - 1 2 -
+29  6 14 1 - 0 0 -
+30  6 13 14 - 0 0 -
+31  6 13 6 - 0 2 -
+# --- M12 (occupies m.c. 12-17, 19-22, 24, 25, 27; entry m.c. 12)
+12  6 30 21 - 0 1 -
+13  6 30 29 - 0 4 -
+14  6 14 25 - 0 3 -
+15  6 14 21 - 0 0 -
+16  6 14 27 - 0 2 -
+17  6 0 24 - 0 5 -
+19  6 13 23 - 0 1 -
+20  6 30 13 - 0 3 -
+21  6 16 13 - 0 2 -
+22  6 21 22 1 0 3 -
+24  6 13 1 - 4 22 -
+25  6 16 27 - 0 18 -
+27  1 29 23 - 1 1 -

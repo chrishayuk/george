@@ -1,0 +1,4 @@
+5, 32, 0||(a) ;            # first suffix 32: spills into b
+0, 0||b (P) ;
+6, 1, 33||(a) ;            # second suffix 33: taken modulo 32, no spill
+1, 1||a (P) ;
