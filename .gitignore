@@ -9,3 +9,4 @@ node_modules
 sources/deuce/ldm/
 sources/deuce/deucdocs.html
 .claude/
+__pycache__/

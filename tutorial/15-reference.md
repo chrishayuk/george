@@ -33,7 +33,9 @@ The letters in order, columns 4 and 5 of the coding table:
 A single suffix outside 0-31 spills into the following (or preceding)
 letters, modulo 1024. Of a double suffix, the first is taken modulo 128
 and spills through a, b, c and d; the second is taken modulo 32. Suffixes
-are rounded down to whole numbers.
+are made whole by Hamblin's "fetch integer": to the nearest, halves up,
+for 1/2 <= |x| < 2^15, and in a definite but odd way outside that range
+(DECISIONS.md 4).
 
 ## Arithmetic and functions
 

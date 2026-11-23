@@ -302,7 +302,8 @@ PM §6.8, pp. 46-47; BP sheets 33-34.
     accumulator's adder, D21 by replacing it.
   - GEORGE's sin and cos depend on this. They read 21₂ three m.c. after
     `0-24`, when it holds TS16 if the multiplier's top digit was 1, and
-    subtract it from 21₃ mid-way (RUNNING-GEORGE.md, finding 14).
+    subtract it from 21₃ after the product is complete (RUNNING-GEORGE.md,
+    findings 14 and 19).
   - When nothing touches DS21 during the multiplication, the result is the
     plain product, as before. Test `multiplier_step_by_step_ldm_p64`.
 - The sources are saved in `sources/deuce/ldm/` (`ldmpart1.html`, its text,
@@ -435,7 +436,10 @@ D. G. Burnett-Hall, *The DEUCE Console* (MS/B/201), pp. 2-4.
 
 ## 11. Not modelled
 
-- Partial products and quotients during multiplication and division.
+- Partial quotients during division: the divider gives its result from
+  the Programming Manual's definition (p.50), not step by step, and its
+  results for out-of-range operands are the model's, not a measured
+  DEUCE's. (Partial products during multiplication are modelled: §5.)
 - Missed-card and other alarms.
 - Exact Hollerith timing jitter.
 - Mark II/IIA extras: the 64-column reader and punch, paper tape, magnetic
