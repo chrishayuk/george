@@ -1,0 +1,30 @@
+# The TPK algorithm of Knuth and Trabb Pardo, "The Early Development of
+# Programming Languages" (STAN-CS-76-562, 1976), page 3, in ALGOL 60: read
+# a(0) ... a(10); then for i from 10 down to 0 put y = f(a(i)), where
+# f(t) = sqrt(|t|) + 5t^3, and write i and y, or i and "TOO LARGE" if
+# y > 400. They give no GEORGE version. The whole program is ours, in the
+# manual's style. The data are their example input: 1 1.5 2 2.25 2.5 2.75
+# 3 3.25 3.5 4.5 5.5.
+#
+# What GEORGE forced:
+# - There is no text. "TOO LARGE" is punched as 999 (their rule, pp. 4-5).
+#   Each number goes on a card of its own (section 2.3), so i and y are
+#   two cards: 22 in all.
+# - rep only counts up, "in unit steps, from a to b" (section 1.6, p. 6),
+#   so i = 10 - j for j from 0 to 10.
+# - f is subroutine 6, attached after the main program's "]" and called
+#   by "6 ↓" as a monadic operator on the last cell (section 1.7, p. 8).
+#   t^3 is "dup dup × ×", not "3 pow": pow goes through log, and stops on
+#   1 30-21x for minus a power of two (ERRATA.md).
+# - There is no "else". The if is a conditional skip to mark 8, and the
+#   two ways meet at mark 9 before the "]" (section 1.8, p. 9).
+# - Numbers are floating point with a 22-digit binary mantissa and are
+#   punched to six figures (sections 1.2 and 2.3).
+0, 10 R|(a)                         # read a(0) ... a(10)
+0, 10 rep (j) 10 j - (i) (P) ;      # i from 10 down to 0: punch i
+i|a 6 ↓ (y) 400 > 8 ↑               # y = f(a(i)); if y > 400 skip to mark 8
+y (P) ; 9 ↑                         # punch y
+* 8 999 (P) ;                       # "TOO LARGE"
+* 9 ]
+]                                   # end of main program
+* 6 dup mod √ rev dup dup × × 5 × + ]   # subroutine 6: f(t) = √|t| + 5t³

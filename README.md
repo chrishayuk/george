@@ -125,14 +125,16 @@ ASCII spellings: `mul` ×, `/` ÷, `down` ↓, `up` ↑, `or` ∨, `not` ~, `and
 
 ## Examples
 
-`examples/` has 16 programs. All but two are from the manual and are as
+`examples/` has 17 programs. All but three are from the manual and are as
 printed, apart from data and the punching of results where the manual
 leaves them in store. Each says what is ours. They include squares, sums of
 squares, factorials, Newton's square root (by repetition and by
 convergence), the mean and root mean square of twenty numbers, a
 matrix-vector product and quadratic form, Simpson's rule, subroutines that
-call subroutines, and the endless reading loop that ends when the cards run
-out. Each has an `.out` file and, where it reads cards, an `.in` file.
+call subroutines, the endless reading loop that ends when the cards run
+out, and Knuth and Trabb Pardo's TPK (`tpk.george`), whose 79.7062 for
+i = 4 is one more in the last figure than the value rounds to, from
+Hamblin's add routine. Each has an `.out` file and, where it reads cards, an `.in` file.
 
 ## What running it found
 

@@ -68,6 +68,10 @@ fn the_manuals_programs_on_hamblins_george() {
         "normalise",
         "matrix",
         "pairs",
+        // Knuth and Trabb Pardo's TPK. Its 79.7062 for i = 4, where the
+        // value rounds to 79.7061, is Hamblin's add routine
+        // (RUNNING-GEORGE.md, finding 15) on both sides.
+        "tpk",
     ] {
         let (out, outcome, count) = run(&m, &blocks, name);
         let want: Vec<String> = std::fs::read_to_string(root().join(format!("examples/{name}.out")))
